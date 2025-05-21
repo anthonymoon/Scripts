@@ -10,36 +10,35 @@ import subprocess
 import shutil
 import time
 import re
+import argparse
 import numpy as np
 from typing import Tuple, Optional
+
+
+# ANSI color functions for consistent output
+def red(text): return f"\033[0;31m{text}\033[0m"
+def green(text): return f"\033[0;32m{text}\033[0m"
+def yellow(text): return f"\033[0;33m{text}\033[0m"
+def blue(text): return f"\033[0;36m{text}\033[0m"
+def purple(text): return f"\033[0;35m{text}\033[0m"
 
 
 class FSStressTester:
     """Simplified filesystem stress tester for Linux systems."""
 
-    # ANSI color codes
-    COLORS = {
-        'RED': '\033[0;31m',
-        'GREEN': '\033[0;32m',
-        'YELLOW': '\033[0;33m',
-        'BLUE': '\033[0;36m',
-        'PURPLE': '\033[0;35m',
-        'CYAN': '\033[0;36m',
-        'NC': '\033[0m'
-    }
-
-    def __init__(self, test_dir: str = './fs_test', test_size: str = None, db_file: str = None):
+    def __init__(self, test_dir: str, test_size: str = None, db_file: str = None, 
+                 jobs: int = 4, runtime: int = 20, repeat: int = 2):
         """Initialize the filesystem stress tester with test parameters."""
         self.test_dir = os.path.abspath(test_dir)
-        self.num_jobs = 4        # Concurrent jobs
-        self.runtime_each = 20   # Runtime (seconds per test run)
-        self.runs = 2            # Times to repeat each test
+        self.num_jobs = jobs           # Concurrent jobs
+        self.runtime_each = runtime    # Runtime (seconds per test run)
+        self.runs = repeat             # Times to repeat each test
         self.test_size = test_size
         self.db_file = db_file
         self.run_id = None
         self.physical_devices = []
 
-        # Optimize process priority
+        # Optimize process priority - requires root
         self._optimize_process_priority()
 
         # Set test size if not provided
@@ -54,15 +53,14 @@ class FSStressTester:
         os.makedirs(self.test_dir, exist_ok=True)
 
         # SSD-optimized parameters for fio
-        self.ssd_params = ("--direct=1 --ioengine=libaio --allow_file_create=1 "
-                          "--thread --verify=0 --norandommap --serialize_overlap=1")
+        self.ssd_params = "--direct=1 --ioengine=libaio --thread --verify=0 --norandommap"
 
-        print(f"{self.COLORS['BLUE']}=== System Information ==={self.COLORS['NC']}")
-        print(f"{self.COLORS['YELLOW']}Kernel:{self.COLORS['NC']} {os.uname().release}")
-        print(f"{self.COLORS['YELLOW']}CPU:{self.COLORS['NC']} {self._get_cpu_info()}")
-        print(f"{self.COLORS['YELLOW']}Memory:{self.COLORS['NC']} {self._get_memory_info()}")
-        print(f"{self.COLORS['YELLOW']}Filesystem:{self.COLORS['NC']} {self._get_filesystem_type()}")
-        print(f"{self.COLORS['YELLOW']}Mount options:{self.COLORS['NC']} {self._get_mount_options()}")
+        print(blue("=== System Information ==="))
+        print(f"{yellow('Kernel:')} {os.uname().release}")
+        print(f"{yellow('CPU:')} {self._get_cpu_info()}")
+        print(f"{yellow('Memory:')} {self._get_memory_info()}")
+        print(f"{yellow('Filesystem:')} {self._get_filesystem_type()}")
+        print(f"{yellow('Mount options:')} {self._get_mount_options()}")
         print()
 
     def _optimize_process_priority(self) -> None:
@@ -114,19 +112,6 @@ class FSStressTester:
             # If auto-sizing fails, use a safe default
             self.test_size = "1G"
             print(f"Warning: Error auto-sizing test file: {e}. Using default size: {self.test_size}")
-
-    def _get_device_id(self) -> str:
-        """Get the device ID for the test directory's mount point."""
-        try:
-            result = subprocess.run(
-                ['df', '-P', self.test_dir],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            return result.stdout.strip().split('\n')[1].split()[0]
-        except Exception:
-            return "unknown_device"
 
     def _get_cpu_info(self) -> str:
         """Get CPU information."""
@@ -181,13 +166,13 @@ class FSStressTester:
 
     def init_database(self) -> None:
         """Initialize the SQLite database."""
-        print(f"{self.COLORS['BLUE']}Initializing benchmark database...{self.COLORS['NC']}")
+        print(blue("Initializing benchmark database..."))
 
         try:
             conn = sqlite3.connect(self.db_file)
             cursor = conn.cursor()
 
-            # Create tables if they don't exist - simplified schema
+            # Create simple tables if they don't exist
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS test_runs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -215,12 +200,12 @@ class FSStressTester:
 
             print(f"Database initialized at: {self.db_file}")
         except sqlite3.Error as e:
-            print(f"{self.COLORS['RED']}Error initializing database: {e}{self.COLORS['NC']}")
+            print(red(f"Error initializing database: {e}"))
             sys.exit(1)
 
     def save_run_metadata(self) -> None:
         """Save run metadata to database and get the run_id."""
-        print(f"{self.COLORS['BLUE']}Saving run metadata to database...{self.COLORS['NC']}")
+        print(blue("Saving run metadata to database..."))
 
         try:
             kernel = os.uname().release
@@ -241,7 +226,7 @@ class FSStressTester:
 
             print(f"Run metadata saved with ID: {self.run_id}")
         except sqlite3.Error as e:
-            print(f"{self.COLORS['RED']}Error saving run metadata: {e}{self.COLORS['NC']}")
+            print(red(f"Error saving run metadata: {e}"))
             sys.exit(1)
 
     def save_test_results(self, test_name: str, iops: float, latency: float, bandwidth: float) -> None:
@@ -265,7 +250,7 @@ class FSStressTester:
             conn.commit()
             conn.close()
         except sqlite3.Error as e:
-            print(f"{self.COLORS['RED']}Warning: Could not save test results: {e}{self.COLORS['NC']}")
+            print(red(f"Warning: Could not save test results: {e}"))
 
     def get_previous_results(self, test_name: str) -> Tuple[Optional[float], Optional[float], Optional[float]]:
         """Get the previous run's results for comparison."""
@@ -290,7 +275,7 @@ class FSStressTester:
             else:
                 return None, None, None
         except sqlite3.Error as e:
-            print(f"{self.COLORS['RED']}Warning: Could not get previous results: {e}{self.COLORS['NC']}")
+            print(red(f"Warning: Could not get previous results: {e}"))
             return None, None, None
 
     def calc_percentage_change(self, current: float, previous: float, is_latency: bool = False) -> str:
@@ -304,21 +289,21 @@ class FSStressTester:
             if is_latency:
                 # For latency, negative change is good
                 if change < 0:
-                    return f"{self.COLORS['GREEN']}{change:.2f}%{self.COLORS['NC']}"
+                    return green(f"{change:.2f}%")
                 else:
-                    return f"{self.COLORS['RED']}+{change:.2f}%{self.COLORS['NC']}"
+                    return red(f"+{change:.2f}%")
             else:
                 # For IOPS and bandwidth, positive change is good
                 if change < 0:
-                    return f"{self.COLORS['RED']}{change:.2f}%{self.COLORS['NC']}"
+                    return red(f"{change:.2f}%")
                 else:
-                    return f"{self.COLORS['GREEN']}+{change:.2f}%{self.COLORS['NC']}"
+                    return green(f"+{change:.2f}%")
         except Exception:
             return "N/A"
 
     def get_storage_info(self) -> None:
         """Get basic information about the storage device."""
-        print(f"{self.COLORS['BLUE']}=== Storage Device Analysis ==={self.COLORS['NC']}")
+        print(blue("=== Storage Device Analysis ==="))
 
         try:
             # Get the mount point for the directory
@@ -329,7 +314,7 @@ class FSStressTester:
                 raise ValueError("Could not determine mount point")
 
             fs_device = lines[1].split()[0]
-            print(f"{self.COLORS['YELLOW']}Storage device:{self.COLORS['NC']} {fs_device}")
+            print(f"{yellow('Storage device:')} {fs_device}")
             self.physical_devices.append(fs_device)
             
             # Try to determine if it's an SSD
@@ -341,9 +326,9 @@ class FSStressTester:
             if os.path.exists(rotational_path):
                 with open(rotational_path, 'r') as f:
                     if f.read().strip() == "0":
-                        print(f"{self.COLORS['YELLOW']}Device type:{self.COLORS['NC']} SSD")
+                        print(f"{yellow('Device type:')} SSD")
                     else:
-                        print(f"{self.COLORS['YELLOW']}Device type:{self.COLORS['NC']} HDD (rotational)")
+                        print(f"{yellow('Device type:')} HDD (rotational)")
                         
             # Check I/O scheduler
             scheduler_path = f"/sys/block/{device_name}/queue/scheduler"
@@ -352,12 +337,12 @@ class FSStressTester:
                     scheduler_data = f.read().strip()
                     match = re.search(r'\[(.*?)\]', scheduler_data)
                     if match:
-                        print(f"{self.COLORS['YELLOW']}I/O scheduler:{self.COLORS['NC']} {match.group(1)}")
+                        print(f"{yellow('I/O scheduler:')} {match.group(1)}")
                     else:
-                        print(f"{self.COLORS['YELLOW']}I/O scheduler:{self.COLORS['NC']} {scheduler_data}")
+                        print(f"{yellow('I/O scheduler:')} {scheduler_data}")
                         
         except Exception as e:
-            print(f"{self.COLORS['RED']}Error detecting storage device: {e}{self.COLORS['NC']}")
+            print(red(f"Error detecting storage device: {e}"))
 
     def extract_metric(self, output: str, metric: str) -> Optional[float]:
         """Extract the specified metric from fio output."""
@@ -436,13 +421,13 @@ class FSStressTester:
             else:
                 return None
         except Exception as e:
-            print(f"{self.COLORS['RED']}Warning: Error extracting {metric}: {e}{self.COLORS['NC']}")
+            print(red(f"Warning: Error extracting {metric}: {e}"))
             return 0
 
     def run_test(self, test_name: str, fio_options: str, description: str) -> None:
         """Run fio test multiple times and calculate geometric mean."""
-        print(f"{self.COLORS['GREEN']}Running test: {test_name}{self.COLORS['NC']}")
-        print(f"{self.COLORS['YELLOW']}Description:{self.COLORS['NC']} {description}")
+        print(green(f"Running test: {test_name}"))
+        print(f"{yellow('Description:')} {description}")
 
         # Arrays to store results
         results_iops = []
@@ -450,18 +435,24 @@ class FSStressTester:
         results_bw = []
 
         # Drop caches before starting
-        with open('/proc/sys/vm/drop_caches', 'w') as f:
-            f.write('3')
-        subprocess.run(['sync'], check=False)
-
-        for run in range(1, self.runs + 1):
-            print(f"{self.COLORS['BLUE']}Run {run} of {self.runs}{self.COLORS['NC']}")
-            print(f"{self.COLORS['YELLOW']}Command:{self.COLORS['NC']} fio {self.ssd_params} {fio_options}")
-
-            # Clear caches before each run
+        try:
             with open('/proc/sys/vm/drop_caches', 'w') as f:
                 f.write('3')
             subprocess.run(['sync'], check=False)
+        except Exception as e:
+            print(red(f"Error dropping caches: {e}"))
+
+        for run in range(1, self.runs + 1):
+            print(blue(f"Run {run} of {self.runs}"))
+            print(f"{yellow('Command:')} fio {self.ssd_params} {fio_options}")
+
+            # Clear caches before each run
+            try:
+                with open('/proc/sys/vm/drop_caches', 'w') as f:
+                    f.write('3')
+                subprocess.run(['sync'], check=False)
+            except Exception as e:
+                print(red(f"Error dropping caches: {e}"))
 
             # Run fio with high priority
             try:
@@ -482,7 +473,7 @@ class FSStressTester:
                 lat = 0 if lat is None else lat
                 bw = 0 if bw is None else bw
 
-                print(f"{self.COLORS['PURPLE']}Run {run} Results: IOPS={iops}, Latency={lat} ms, Bandwidth={bw} KB/s{self.COLORS['NC']}")
+                print(purple(f"Run {run} Results: IOPS={iops:.2f}, Latency={lat:.2f} ms, Bandwidth={bw:.2f} KB/s"))
 
                 # Store results
                 results_iops.append(iops)
@@ -493,7 +484,7 @@ class FSStressTester:
                 time.sleep(2)
 
             except subprocess.SubprocessError as e:
-                print(f"{self.COLORS['RED']}Error running fio: {e}{self.COLORS['NC']}")
+                print(red(f"Error running fio: {e}"))
                 # Append zeros to maintain consistent arrays
                 results_iops.append(0)
                 results_lat.append(0)
@@ -533,38 +524,38 @@ class FSStressTester:
 
             # Print results with comparisons
             print("")
-            print(f"{self.COLORS['GREEN']}=== Results for {test_name} (with comparison) ==={self.COLORS['NC']}")
-            print(f"{self.COLORS['YELLOW']}IOPS:{self.COLORS['NC']}             {geomean_iops:.2f} \t[Previous: {prev_iops:.2f} \tChange: {iops_change}]")
-            print(f"{self.COLORS['YELLOW']}Average Latency:{self.COLORS['NC']}  {geomean_lat:.2f} ms \t[Previous: {prev_latency:.2f} ms \tChange: {lat_change}]")
-            print(f"{self.COLORS['YELLOW']}Bandwidth:{self.COLORS['NC']}        {geomean_bw:.2f} KB/s \t[Previous: {prev_bandwidth:.2f} KB/s \tChange: {bw_change}]")
+            print(green(f"=== Results for {test_name} (with comparison) ==="))
+            print(f"{yellow('IOPS:')}             {geomean_iops:.2f} \t[Previous: {prev_iops:.2f} \tChange: {iops_change}]")
+            print(f"{yellow('Average Latency:')}  {geomean_lat:.2f} ms \t[Previous: {prev_latency:.2f} ms \tChange: {lat_change}]")
+            print(f"{yellow('Bandwidth:')}        {geomean_bw:.2f} KB/s \t[Previous: {prev_bandwidth:.2f} KB/s \tChange: {bw_change}]")
         else:
             # No previous results
             print("")
-            print(f"{self.COLORS['GREEN']}=== Results for {test_name} ==={self.COLORS['NC']}")
-            print(f"{self.COLORS['YELLOW']}IOPS:{self.COLORS['NC']}             {geomean_iops:.2f}")
-            print(f"{self.COLORS['YELLOW']}Average Latency:{self.COLORS['NC']}  {geomean_lat:.2f} ms")
-            print(f"{self.COLORS['YELLOW']}Bandwidth:{self.COLORS['NC']}        {geomean_bw:.2f} KB/s")
-            print(f"{self.COLORS['BLUE']}(No previous test data available for comparison){self.COLORS['NC']}")
+            print(green(f"=== Results for {test_name} ==="))
+            print(f"{yellow('IOPS:')}             {geomean_iops:.2f}")
+            print(f"{yellow('Average Latency:')}  {geomean_lat:.2f} ms")
+            print(f"{yellow('Bandwidth:')}        {geomean_bw:.2f} KB/s")
+            print(blue("(No previous test data available for comparison)"))
 
         print("")
-        print(f"{self.COLORS['GREEN']}Completed test: {test_name}{self.COLORS['NC']}")
+        print(green(f"Completed test: {test_name}"))
         print("--------------------------------------------------------------")
         print("")
 
     def run_all_tests(self) -> None:
         """Run core filesystem stress tests."""
         # Display test parameters
-        print(f"{self.COLORS['BLUE']}=== Test Parameters ==={self.COLORS['NC']}")
-        print(f"{self.COLORS['YELLOW']}Test directory:{self.COLORS['NC']} {self.test_dir}")
-        print(f"{self.COLORS['YELLOW']}Test size:{self.COLORS['NC']} {self.test_size}")
-        print(f"{self.COLORS['YELLOW']}Number of jobs:{self.COLORS['NC']} {self.num_jobs}")
-        print(f"{self.COLORS['YELLOW']}Runtime per test:{self.COLORS['NC']} {self.runtime_each} seconds")
-        print(f"{self.COLORS['YELLOW']}Number of runs per test:{self.COLORS['NC']} {self.runs}")
-        print(f"{self.COLORS['YELLOW']}Database file:{self.COLORS['NC']} {self.db_file}")
+        print(blue("=== Test Parameters ==="))
+        print(f"{yellow('Test directory:')} {self.test_dir}")
+        print(f"{yellow('Test size:')} {self.test_size}")
+        print(f"{yellow('Number of jobs:')} {self.num_jobs}")
+        print(f"{yellow('Runtime per test:')} {self.runtime_each} seconds")
+        print(f"{yellow('Number of runs per test:')} {self.runs}")
+        print(f"{yellow('Database file:')} {self.db_file}")
         print("")
 
         # Create an empty file to pre-allocate space
-        print(f"{self.COLORS['BLUE']}Pre-allocating test file...{self.COLORS['NC']}")
+        print(blue("Pre-allocating test file..."))
         preallocated_file = os.path.join(self.test_dir, "preallocated_file")
 
         try:
@@ -588,7 +579,7 @@ class FSStressTester:
                     'bs=1M', f'count={size_mb}', 'status=progress'
                 ], check=True)
         except Exception as e:
-            print(f"{self.COLORS['RED']}Warning: Error pre-allocating file: {e}{self.COLORS['NC']}")
+            print(red(f"Warning: Error pre-allocating file: {e}"))
         print("")
 
         # 1. METADATA-INTENSIVE WORKLOAD
@@ -620,7 +611,7 @@ class FSStressTester:
         )
 
         # Clean up
-        print(f"{self.COLORS['BLUE']}Cleaning up test files...{self.COLORS['NC']}")
+        print(blue("Cleaning up test files..."))
         try:
             os.remove(preallocated_file)
         except OSError:
@@ -646,47 +637,70 @@ class FSStressTester:
 
         # Final summary
         print("")
-        print(f"{self.COLORS['GREEN']}All filesystem stress tests completed!{self.COLORS['NC']}")
+        print(green("All filesystem stress tests completed!"))
         print(f"Test results have been saved to the database at: {self.db_file}")
         print("")
         print(f"To view results: sqlite3 {self.db_file} 'SELECT * FROM test_results WHERE run_id = {self.run_id};'")
 
 
-def show_help() -> None:
-    """Display help information."""
-    print(f"Usage: {sys.argv[0]} [TEST_DIR] [TEST_SIZE] [DB_FILE]")
-    print("")
-    print("Parameters:")
-    print("  TEST_DIR  - Directory for test files (default: ./fs_test)")
-    print("  TEST_SIZE - Size for test files, auto-scaled if not provided")
-    print("  DB_FILE   - Path to SQLite database (default: /tmp/fs_benchmark.db)")
-    print("")
-    print("Examples:")
-    print(f"  {sys.argv[0]}                      # Run with defaults")
-    print(f"  {sys.argv[0]} /mnt/test           # Use custom test directory")
-    print(f"  {sys.argv[0]} /mnt/test 8G        # Use 8GB test size")
-    print(f"  {sys.argv[0]} /mnt/test 8G /tmp/results.db # Use custom database file")
-    print("")
-    sys.exit(0)
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Run filesystem stress tests on Linux systems (requires root privileges)"
+    )
+    
+    parser.add_argument(
+        "test_dir", nargs="?", default="./fs_test",
+        help="Directory to store test files (default: ./fs_test)"
+    )
+    
+    parser.add_argument(
+        "test_size", nargs="?", default=None,
+        help="Size for test files (example: 4G, 512M, auto-detected if not specified)"
+    )
+    
+    parser.add_argument(
+        "db_file", nargs="?", default=None,
+        help="SQLite database file path (default: /tmp/fs_benchmark.db)"
+    )
+    
+    parser.add_argument(
+        "-j", "--jobs", type=int, default=4,
+        help="Number of concurrent jobs (default: 4)"
+    )
+    
+    parser.add_argument(
+        "-t", "--time", type=int, default=20,
+        help="Runtime in seconds for each test (default: 20)"
+    )
+    
+    parser.add_argument(
+        "-r", "--repeat", type=int, default=2,
+        help="Number of times to repeat each test (default: 2)"
+    )
+    
+    return parser.parse_args()
 
 
 def main() -> None:
     """Main entry point for the script."""
     # Check if running as root
     if os.geteuid() != 0:
-        print("This script must be run as root. Please use sudo.")
+        print(red("This script must be run as root. Please use sudo."))
         sys.exit(1)
-        
-    # Parse command-line arguments
-    if len(sys.argv) > 1 and (sys.argv[1] == "--help" or sys.argv[1] == "-h"):
-        show_help()
-
-    test_dir = sys.argv[1] if len(sys.argv) > 1 else "./fs_test"
-    test_size = sys.argv[2] if len(sys.argv) > 2 else None
-    db_file = sys.argv[3] if len(sys.argv) > 3 else None
-
+    
+    # Parse arguments
+    args = parse_args()
+    
     # Create and run the stress tester
-    tester = FSStressTester(test_dir, test_size, db_file)
+    tester = FSStressTester(
+        test_dir=args.test_dir,
+        test_size=args.test_size, 
+        db_file=args.db_file,
+        jobs=args.jobs,
+        runtime=args.time,
+        repeat=args.repeat
+    )
     tester.run()
 
 
