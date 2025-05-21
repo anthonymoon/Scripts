@@ -156,7 +156,8 @@ class FSStressTester:
         except Exception as e:
             # If auto-sizing fails, use a safe defaul
             self.test_size = "1G"
-            print(f"Warning: Error auto-sizing test file: {e}. Using default size: {self.test_size}")
+            size_msg = f"Using default size: {self.test_size}"
+            print(f"Warning: Error auto-sizing test file: {e}. {size_msg}")
 
     def _get_cpu_info(self) -> str:
         """Get CPU information."""
@@ -288,7 +289,8 @@ class FSStressTester:
             print(red(f"Error saving run metadata: {e}"))
             sys.exit(1)
 
-    def save_test_results(self, test_name: str, iops: float, latency: float, bandwidth: float) -> None:
+    def save_test_results(self, test_name: str, iops: float, latency: float,
+                           bandwidth: float) -> None:
         """Save test results to database."""
         try:
             # Use 0.0 for None or empty values
@@ -311,8 +313,8 @@ class FSStressTester:
         except sqlite3.Error as e:
             print(red(f"Warning: Could not save test results: {e}"))
 
-    def get_previous_results(self, test_name: str) -> Tuple[Optional[float], Optional[float],
-                                                             Optional[float]]:
+    def get_previous_results(self, test_name: str) -> Tuple[
+            Optional[float], Optional[float], Optional[float]]:
         """Get the previous run's results for comparison."""
         try:
             conn = sqlite3.connect(self.db_file)
@@ -322,7 +324,8 @@ class FSStressTester:
             SELECT r.iops, r.latency_ms, r.bandwidth_kbs
             FROM test_results r
             JOIN test_runs tr ON r.run_id = tr.id
-            WHERE r.test_name = ? AND tr.id < ?
+            WHERE r.test_name = ?
+              AND tr.id < ?
             ORDER BY tr.id DESC
             LIMIT 1
             ''', (test_name, self.run_id))
@@ -337,7 +340,8 @@ class FSStressTester:
             print(red(f"Warning: Could not get previous results: {e}"))
             return None, None, None
 
-    def calc_percentage_change(self, current: float, previous: float, is_latency: bool = False) -> str:
+    def calc_percentage_change(self, current: float, previous: float,
+                               is_latency: bool = False) -> str:
         """Calculate percentage change between current and previous values."""
         if previous is None or previous == 0:
             return "N/A"
@@ -470,7 +474,7 @@ class FSStressTester:
         """Convert units from K/M/G to base numbers.
 
         Args:
-            matches: Regex match object containing value and unit
+            matches: Regex match object containing value and uni
             binary: If True, use 1024-based conversion instead of 1000-based
 
         Returns:
@@ -481,30 +485,29 @@ class FSStressTester:
 
         if not unit:
             return val
-            
+
         # Define unit multipliers
         binary_multipliers = {'k': 1024, 'm': 1024**2, 'g': 1024**3}
         decimal_multipliers = {'k': 1000, 'm': 1000**2, 'g': 1000**3}
-        
+
         # Get the appropriate multiplier based on unit and binary flag
         multipliers = binary_multipliers if binary else decimal_multipliers
         return val * multipliers.get(unit, 1)
-        
+
     def _format_bandwidth(self, bw_kbs: float) -> str:
         """Format bandwidth in appropriate units (KB/s, MB/s, or GB/s).
-        
+
         Args:
             bw_kbs: Bandwidth in KB/s
-            
+
         Returns:
             Formatted string with appropriate units
         """
         if bw_kbs >= 1048576:  # 1 GB/s = 1024*1024 KB/s
             return f"{bw_kbs/1048576:.2f} GB/s"
-        elif bw_kbs >= 1024:   # 1 MB/s = 1024 KB/s
+        if bw_kbs >= 1024:   # 1 MB/s = 1024 KB/s
             return f"{bw_kbs/1024:.2f} MB/s"
-        else:
-            return f"{bw_kbs:.2f} KB/s"
+        return f"{bw_kbs:.2f} KB/s"
 
     def drop_caches(self) -> None:
         """Drop system caches to ensure consistent benchmarking."""
@@ -700,28 +703,31 @@ class FSStressTester:
         print("")
 
         # Define test workloads as a dictionary
+        # Define common parameters
+        base_opts = f"--time_based --numjobs={self.num_jobs} --group_reporting"
+
         test_workloads = {
             "Metadata-Intensive": {
-                "options": f"--directory={self.test_dir} --name=metadata_test --size=32M --nrfiles=1000 "
-                          f"--rw=randwrite --bs=4k --sync=1 --fsync=1 --runtime={self.runtime_each} "
-                          f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64 "
-                          f"--file_service_type=random --ramp_time=5",
-                "description": "Small files with synchronous writes, stressing filesystem metadata operations."
+                "options": (f"--directory={self.test_dir} --name=metadata_test --size=32M "
+                           f"--nrfiles=1000 --rw=randwrite --bs=4k --sync=1 --fsync=1 "
+                           f"--runtime={self.runtime_each} {base_opts} "
+                           f"--iodepth=64 --file_service_type=random --ramp_time=5"),
+                "description": "Small files with synchronous writes, testing metadata operations."
             },
             "Random Writes": {
-                "options": f"--directory={self.test_dir} --name=rand_write --size={self.test_size} "
-                          f"--rw=randwrite --bs=4k --sync=1 --runtime={self.runtime_each} "
-                          f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64",
+                "options": (f"--directory={self.test_dir} --name=rand_write "
+                           f"--size={self.test_size} --rw=randwrite --bs=4k --sync=1 "
+                           f"--runtime={self.runtime_each} {base_opts} --iodepth=64"),
                 "description": "Random write performance with synchronous I/O."
             },
             "Mixed ReadWrite": {
-                "options": f"--directory={self.test_dir} --name=mixed_rw --size={self.test_size} "
-                          f"--rw=randrw --rwmixread=70 --bs=8k --runtime={self.runtime_each} "
-                          f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=32",
-                "description": "Mixed read/write workload with 70% reads, typical of database environments."
+                "options": (f"--directory={self.test_dir} --name=mixed_rw "
+                           f"--size={self.test_size} --rw=randrw --rwmixread=70 "
+                           f"--bs=8k --runtime={self.runtime_each} {base_opts} --iodepth=32"),
+                "description": "Mixed read/write (70% reads), typical of database environments."
             }
         }
-        
+
         # Run all defined tests using items() iteration
         for test_name, config in test_workloads.items():
             self.run_test(test_name, config["options"], config["description"])
@@ -767,7 +773,8 @@ class FSStressTester:
         print(green("All filesystem stress tests completed!"))
         print(f"Test results have been saved to the database at: {self.db_file}")
         print("")
-        print(f"To view results: sqlite3 {self.db_file} 'SELECT * FROM test_results WHERE run_id = {self.run_id};'")
+        query = f"SELECT * FROM test_results WHERE run_id = {self.run_id}"
+        print(f"To view results: sqlite3 {self.db_file} '{query};'")
 
 
 def parse_args():
@@ -781,8 +788,8 @@ def parse_args():
         test_size: Size for test files (example: 4G, 512M)
         db_file: SQLite database file path
         -j/--jobs: Number of concurrent jobs
-        -t/--time: Runtime in seconds for each test
-        -r/--repeat: Number of times to repeat each test
+        -t/--time: Runtime in seconds for each tes
+        -r/--repeat: Number of times to repeat each tes
     """
     parser = argparse.ArgumentParser(
         description="Run filesystem stress tests on Linux systems (requires root privileges)"
@@ -845,7 +852,7 @@ def main() -> None:
         db_file=args.db_file,
         jobs=args.jobs,
         runtime=args.time,
-        repeat=args.repeat
+        repeat=args.repea
     )
     tester.run()
 
