@@ -470,7 +470,7 @@ class FSStressTester:
         """Convert units from K/M/G to base numbers.
 
         Args:
-            matches: Regex match object containing value and uni
+            matches: Regex match object containing value and unit
             binary: If True, use 1024-based conversion instead of 1000-based
 
         Returns:
@@ -481,25 +481,14 @@ class FSStressTester:
 
         if not unit:
             return val
-
-        if binary:
-            # Binary units (powers of 1024)
-            if unit == 'k':
-                val *= 1024
-            elif unit == 'm':
-                val *= 1048576  # 1024^2
-            elif unit == 'g':
-                val *= 1073741824  # 1024^3
-        else:
-            # Decimal units (powers of 1000)
-            if unit == 'k':
-                val *= 1000
-            elif unit == 'm':
-                val *= 1000000  # 1000^2
-            elif unit == 'g':
-                val *= 1000000000  # 1000^3
-
-        return val
+            
+        # Define unit multipliers
+        binary_multipliers = {'k': 1024, 'm': 1024**2, 'g': 1024**3}
+        decimal_multipliers = {'k': 1000, 'm': 1000**2, 'g': 1000**3}
+        
+        # Get the appropriate multiplier based on unit and binary flag
+        multipliers = binary_multipliers if binary else decimal_multipliers
+        return val * multipliers.get(unit, 1)
 
     def drop_caches(self) -> None:
         """Drop system caches to ensure consistent benchmarking."""
@@ -513,9 +502,7 @@ class FSStressTester:
     def calculate_geomean(self, values: list) -> float:
         """Calculate geometric mean of a list of values, filtering out zeros and None."""
         valid_values = [x for x in values if x is not None and x > 0]
-        if not valid_values:
-            return 0.0
-        return float(np.exp(np.mean(np.log(valid_values))))
+        return float(np.exp(np.mean(np.log(valid_values)))) if valid_values else 0.0
 
     def execute_fio_run(self, run_num: int, fio_options: str) -> Tuple[float, float, float]:
         """Execute a single fio benchmark run and return results."""
@@ -692,32 +679,32 @@ class FSStressTester:
         preallocated_file = self.pre_allocate_file()
         print("")
 
-        # Define test workloads
-        test_workloads = [
-            # Test name, fio options, description
-            ("Metadata-Intensive",
-             f"--directory={self.test_dir} --name=metadata_test --size=32M --nrfiles=1000 "
-             f"--rw=randwrite --bs=4k --sync=1 --fsync=1 --runtime={self.runtime_each} "
-             f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64 "
-             f"--file_service_type=random --ramp_time=5",
-             "Small files with synchronous writes, stressing filesystem metadata operations."),
-
-            ("Random Writes",
-             f"--directory={self.test_dir} --name=rand_write --size={self.test_size} "
-             f"--rw=randwrite --bs=4k --sync=1 --runtime={self.runtime_each} "
-             f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64",
-             "Random write performance with synchronous I/O."),
-
-            ("Mixed ReadWrite",
-             f"--directory={self.test_dir} --name=mixed_rw --size={self.test_size} "
-             f"--rw=randrw --rwmixread=70 --bs=8k --runtime={self.runtime_each} "
-             f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=32",
-             "Mixed read/write workload with 70% reads, typical of database environments.")
-        ]
-
-        # Run all defined tests
-        for test_name, fio_options, description in test_workloads:
-            self.run_test(test_name, fio_options, description)
+        # Define test workloads as a dictionary
+        test_workloads = {
+            "Metadata-Intensive": {
+                "options": f"--directory={self.test_dir} --name=metadata_test --size=32M --nrfiles=1000 "
+                          f"--rw=randwrite --bs=4k --sync=1 --fsync=1 --runtime={self.runtime_each} "
+                          f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64 "
+                          f"--file_service_type=random --ramp_time=5",
+                "description": "Small files with synchronous writes, stressing filesystem metadata operations."
+            },
+            "Random Writes": {
+                "options": f"--directory={self.test_dir} --name=rand_write --size={self.test_size} "
+                          f"--rw=randwrite --bs=4k --sync=1 --runtime={self.runtime_each} "
+                          f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64",
+                "description": "Random write performance with synchronous I/O."
+            },
+            "Mixed ReadWrite": {
+                "options": f"--directory={self.test_dir} --name=mixed_rw --size={self.test_size} "
+                          f"--rw=randrw --rwmixread=70 --bs=8k --runtime={self.runtime_each} "
+                          f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=32",
+                "description": "Mixed read/write workload with 70% reads, typical of database environments."
+            }
+        }
+        
+        # Run all defined tests using items() iteration
+        for test_name, config in test_workloads.items():
+            self.run_test(test_name, config["options"], config["description"])
 
         # Clean up
         print(blue("Cleaning up test files..."))
