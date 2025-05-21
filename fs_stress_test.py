@@ -2,7 +2,7 @@
 """
 Simplified Filesystem Stress Tester (Linux only)
 
-This script runs high-stress filesystem performance tests on Linux systems. It
+This script runs high-stress filesystem performance tests on Linux systems. I
 measures IOPS, latency, and bandwidth under various workload patterns and
 stores results in a SQLite database for comparison between runs.
 
@@ -30,7 +30,7 @@ from typing import Tuple, Optional
 import numpy as np
 
 
-# ANSI color functions for consistent output
+# ANSI color functions for consistent outpu
 def red(text):
     """Format text in red ANSI color."""
     return f"\033[0;31m{text}\033[0m"
@@ -60,7 +60,7 @@ class FSStressTester:
         jobs: int = 4, runtime: int = 20, repeat: int = 2
     ):
         """Initialize the filesystem stress tester with test parameters.
-        
+
         Args:
             test_dir: Directory where test files will be created
             test_size: Size of test files (e.g., "4G", "512M"), auto-detected if None
@@ -72,13 +72,13 @@ class FSStressTester:
         self.test_dir = os.path.abspath(test_dir)
         self.num_jobs = jobs           # Concurrent jobs
         self.runtime_each = runtime    # Runtime (seconds per test run)
-        self.runs = repeat             # Times to repeat each test
+        self.runs = repeat             # Times to repeat each tes
         self.test_size = test_size
         self.db_file = db_file
         self.run_id = None
         self.physical_devices = []
 
-        # Optimize process priority - requires root
+        # Optimize process priority - requires roo
         self._optimize_process_priority()
 
         # Set test size if not provided
@@ -89,7 +89,7 @@ class FSStressTester:
         if not self.db_file:
             self.db_file = "/tmp/fs_benchmark.db"
 
-        # Create test directory if it doesn't exist
+        # Create test directory if it doesn't exis
         os.makedirs(self.test_dir, exist_ok=True)
 
         # SSD-optimized parameters for fio
@@ -112,14 +112,14 @@ class FSStressTester:
                 stderr=subprocess.DEVNULL,
                 check=False
             )
-            
+
             # Set highest CPU priority
             os.nice(-20)
-            
-            # Increase file descriptor limit
+
+            # Increase file descriptor limi
             import resource
             resource.setrlimit(resource.RLIMIT_NOFILE, (1048576, 1048576))
-            
+
             print("Running with elevated process priority")
         except Exception as e:
             print(f"Warning: Unable to optimize process priority: {e}")
@@ -154,7 +154,7 @@ class FSStressTester:
 
             print(f"Auto-sized test file to {self.test_size} based on available space")
         except Exception as e:
-            # If auto-sizing fails, use a safe default
+            # If auto-sizing fails, use a safe defaul
             self.test_size = "1G"
             print(f"Warning: Error auto-sizing test file: {e}. Using default size: {self.test_size}")
 
@@ -174,8 +174,8 @@ class FSStressTester:
         """Get system memory information."""
         try:
             result = subprocess.run(
-                ['free', '-h'], 
-                capture_output=True, 
+                ['free', '-h'],
+                capture_output=True,
                 text=True,
                 check=False
             )
@@ -196,7 +196,8 @@ class FSStressTester:
                 text=True,
                 check=False
             )
-            return result.stdout.strip().split('\n')[1].split()[1]
+            output_lines = result.stdout.strip().split('\n')
+            return output_lines[1].split()[1]
         except Exception as e:
             print(f"Warning: Could not get filesystem type: {e}")
             return "Unknown"
@@ -204,12 +205,14 @@ class FSStressTester:
     def _get_mount_options(self) -> str:
         """Get mount options for the test directory."""
         try:
-            mount_point = subprocess.run(
+            result = subprocess.run(
                 ['df', '-P', self.test_dir],
                 capture_output=True,
                 text=True,
                 check=False
-            ).stdout.strip().split('\n')[1].split()[5]
+            )
+            output_lines = result.stdout.strip().split('\n')
+            mount_point = output_lines[1].split()[5]
 
             with open('/proc/mounts', 'r', encoding='utf-8') as f:
                 for line in f:
@@ -228,7 +231,7 @@ class FSStressTester:
             conn = sqlite3.connect(self.db_file)
             cursor = conn.cursor()
 
-            # Create simple tables if they don't exist
+            # Create simple tables if they don't exis
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS test_runs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -308,7 +311,8 @@ class FSStressTester:
         except sqlite3.Error as e:
             print(red(f"Warning: Could not save test results: {e}"))
 
-    def get_previous_results(self, test_name: str) -> Tuple[Optional[float], Optional[float], Optional[float]]:
+    def get_previous_results(self, test_name: str) -> Tuple[Optional[float], Optional[float],
+                                                             Optional[float]]:
         """Get the previous run's results for comparison."""
         try:
             conn = sqlite3.connect(self.db_file)
@@ -346,7 +350,7 @@ class FSStressTester:
                 if change < 0:
                     return green(f"{change:.2f}%")
                 return red(f"+{change:.2f}%")
-            
+
             # For IOPS and bandwidth, positive change is good
             if change < 0:
                 return red(f"{change:.2f}%")
@@ -357,7 +361,7 @@ class FSStressTester:
 
     def get_storage_info(self) -> None:
         """Get basic information about the storage device.
-        
+
         Identifies the physical storage device hosting the test directory,
         determines if it's an SSD or HDD, and checks the active I/O scheduler.
         Prints this information to the console.
@@ -368,8 +372,8 @@ class FSStressTester:
             # Get the mount point for the directory
             result = subprocess.run(
                 ['df', '-P', self.test_dir],
-                capture_output=True, 
-                text=True, 
+                capture_output=True,
+                text=True,
                 check=True
             )
             lines = result.stdout.strip().split('\n')
@@ -379,12 +383,12 @@ class FSStressTester:
             fs_device = lines[1].split()[0]
             print(f"{yellow('Storage device:')} {fs_device}")
             self.physical_devices.append(fs_device)
-            
+
             # Try to determine if it's an SSD
             device_name = os.path.basename(fs_device)
             if re.match(r'^[a-zA-Z]+[0-9]+$', device_name):
                 device_name = re.sub(r'[0-9]+$', '', device_name)
-                
+
             rotational_path = f"/sys/block/{device_name}/queue/rotational"
             if os.path.exists(rotational_path):
                 with open(rotational_path, 'r', encoding='utf-8') as f:
@@ -392,7 +396,7 @@ class FSStressTester:
                         print(f"{yellow('Device type:')} SSD")
                     else:
                         print(f"{yellow('Device type:')} HDD (rotational)")
-                        
+
             # Check I/O scheduler
             scheduler_path = f"/sys/block/{device_name}/queue/scheduler"
             if os.path.exists(scheduler_path):
@@ -403,81 +407,81 @@ class FSStressTester:
                         print(f"{yellow('I/O scheduler:')} {match.group(1)}")
                     else:
                         print(f"{yellow('I/O scheduler:')} {scheduler_data}")
-                        
+
         except Exception as e:
             print(red(f"Error detecting storage device: {e}"))
 
     def extract_metric(self, output: str, metric: str) -> Optional[float]:
         """Extract the specified metric from fio output.
-        
+
         Parses fio output text to extract performance metrics including IOPS,
         latency, and bandwidth. Handles different fio output formats and unit conversions.
-        
+
         Args:
             output: Raw text output from the fio command
             metric: Which metric to extract - one of "iops", "lat", or "bw" (bandwidth)
-            
+
         Returns:
             The extracted metric value as a float, or 0 if not found
         """
         try:
-            # Extract IOPS from fio output
+            # Extract IOPS from fio outpu
             if metric == "iops":
-                # First try standard format
+                # First try standard forma
                 matches = re.search(r'iops\s*=\s*([0-9.]+)([kKMG]?)', output)
                 if matches:
                     return self._convert_units(matches)
-                
-                # Try newer fio format
+
+                # Try newer fio forma
                 matches = re.search(r'IOPS\s*=\s*([0-9.]+)([kKMG]?)', output)
                 if matches:
                     return self._convert_units(matches)
-                    
+
                 return 0
-            
-            # Extract latency from fio output
+
+            # Extract latency from fio outpu
             if metric == "lat":
                 matches = re.search(r'lat.*?avg\s*=\s*([0-9.]+)', output)
                 if matches:
                     return float(matches.group(1))
                 return 0
-            
-            # Extract bandwidth from fio output
+
+            # Extract bandwidth from fio outpu
             if metric == "bw":
                 # Try newer fio format first (KiB/s)
                 matches = re.search(r'bw\s*=\s*([0-9.]+)([kKMG]?)iB/s', output)
                 if matches:
                     return self._convert_units(matches, binary=True)
-                
-                # Fallback to older format
+
+                # Fallback to older forma
                 matches = re.search(r'bw\s*=\s*([0-9.]+)([kKMG]?)B/s', output)
                 if matches:
                     return self._convert_units(matches, binary=True)
-                    
+
                 return 0
-                
+
             return None
-            
+
         except Exception as e:
             print(red(f"Warning: Error extracting {metric}: {e}"))
             return 0
-            
+
     def _convert_units(self, matches, binary=False) -> float:
         """Convert units from K/M/G to base numbers.
-        
+
         Args:
-            matches: Regex match object containing value and unit
+            matches: Regex match object containing value and uni
             binary: If True, use 1024-based conversion instead of 1000-based
-            
+
         Returns:
             Converted numeric value
         """
         val = float(matches.group(1))
         unit = matches.group(2).lower() if matches.group(2) else ''
-        
+
         if not unit:
             return val
-            
+
         if binary:
             # Binary units (powers of 1024)
             if unit == 'k':
@@ -494,7 +498,7 @@ class FSStressTester:
                 val *= 1000000  # 1000^2
             elif unit == 'g':
                 val *= 1000000000  # 1000^3
-                
+
         return val
 
     def drop_caches(self) -> None:
@@ -519,7 +523,7 @@ class FSStressTester:
             # Build command with proper priority settings
             cmd = ['ionice', '-c', '1', '-n', '0', 'nice', '-n', '-20',
                  'fio'] + self.ssd_params.split() + fio_options.split()
-                 
+
             # Run fio and capture output
             process = subprocess.run(cmd, capture_output=True, text=True, check=True)
             output = process.stdout
@@ -533,19 +537,20 @@ class FSStressTester:
                 f"Run {run_num} Results: IOPS={iops:.2f}, "
                 f"Latency={lat:.2f} ms, Bandwidth={bw:.2f} KB/s"
             ))
-            
+
             return iops, lat, bw
-            
+
         except subprocess.SubprocessError as e:
             print(red(f"Error running fio: {e}"))
             return 0, 0, 0
 
-    def display_results(self, test_name: str, metrics: Tuple[float, float, float], 
-                        prev_metrics: Tuple[Optional[float], Optional[float], Optional[float]]) -> None:
+    def display_results(self, test_name: str, metrics: Tuple[float, float, float],
+                        prev_metrics: Tuple[Optional[float], Optional[float],
+                                           Optional[float]]) -> None:
         """Display benchmark results with comparison to previous runs if available."""
         geomean_iops, geomean_lat, geomean_bw = metrics
         prev_iops, prev_latency, prev_bandwidth = prev_metrics
-        
+
         print("")
         if prev_iops is not None:
             # Calculate percentage changes
@@ -555,9 +560,12 @@ class FSStressTester:
 
             # Print results with comparisons
             print(green(f"=== Results for {test_name} (with comparison) ==="))
-            print(f"{yellow('IOPS:')} {geomean_iops:.2f} \t[Previous: {prev_iops:.2f} \tChange: {iops_change}]")
-            print(f"{yellow('Latency:')} {geomean_lat:.2f} ms \t[Previous: {prev_latency:.2f} ms \tChange: {lat_change}]")
-            print(f"{yellow('Bandwidth:')} {geomean_bw:.2f} KB/s \t[Previous: {prev_bandwidth:.2f} KB/s \tChange: {bw_change}]")
+            print(f"{yellow('IOPS:')} {geomean_iops:.2f} \t[Previous: {prev_iops:.2f} "
+                  f"\tChange: {iops_change}]")
+            print(f"{yellow('Latency:')} {geomean_lat:.2f} ms \t[Previous: {prev_latency:.2f} ms "
+                  f"\tChange: {lat_change}]")
+            print(f"{yellow('Bandwidth:')} {geomean_bw:.2f} KB/s \t"
+                  f"[Previous: {prev_bandwidth:.2f} KB/s \tChange: {bw_change}]")
         else:
             # No previous results
             print(green(f"=== Results for {test_name} ==="))
@@ -568,14 +576,14 @@ class FSStressTester:
 
     def run_test(self, test_name: str, fio_options: str, description: str) -> None:
         """Run fio test multiple times and calculate geometric mean.
-        
+
         Executes the specified fio benchmark test, repeats it multiple times,
         calculates geometric means of the results, and compares with previous runs.
-        
+
         Args:
             test_name: Descriptive name for the test (used in reporting)
             fio_options: Command-line options to pass to fio
-            description: Human-readable description of the test
+            description: Human-readable description of the tes
         """
         print(green(f"Running test: {test_name}"))
         print(f"{yellow('Description:')} {description}")
@@ -596,7 +604,7 @@ class FSStressTester:
 
             # Run fio benchmark
             iops, lat, bw = self.execute_fio_run(run, fio_options)
-            
+
             # Store results
             results_iops.append(iops)
             results_lat.append(lat)
@@ -624,7 +632,7 @@ class FSStressTester:
 
     def pre_allocate_file(self) -> str:
         """Pre-allocate test file and return its path.
-        
+
         Returns:
             Path to the pre-allocated file
         """
@@ -636,23 +644,23 @@ class FSStressTester:
             if shutil.which('fallocate'):
                 subprocess.run(['fallocate', '-l', self.test_size, preallocated_file], check=True)
                 return preallocated_file
-                
+
             # Convert size to MB for dd
             size_mb = 1024  # default 1GB
             if self.test_size.endswith('G'):
                 size_mb = int(float(self.test_size[:-1]) * 1024)
             elif self.test_size.endswith('M'):
                 size_mb = int(float(self.test_size[:-1]))
-                
+
             # Use dd as fallback
             subprocess.run([
                 'dd', 'if=/dev/zero', f'of={preallocated_file}',
                 'bs=1M', f'count={size_mb}', 'status=progress'
             ], check=True)
-                
+
         except Exception as e:
             print(red(f"Warning: Error pre-allocating file: {e}"))
-            
+
         return preallocated_file
 
     def display_test_parameters(self) -> None:
@@ -668,13 +676,13 @@ class FSStressTester:
 
     def run_all_tests(self) -> None:
         """Run core filesystem stress tests.
-        
-        Executes a predefined set of filesystem benchmarks that test different
+
+        Executes a predefined set of filesystem benchmarks that test differen
         workload patterns and I/O characteristics:
         1. Metadata-intensive operations (many small files with fsync)
         2. Random write performance with synchronous I/O
         3. Mixed read/write workload typical of database environments
-        
+
         Pre-allocates test files and cleans up afterward.
         """
         # Display test parameters
@@ -693,20 +701,20 @@ class FSStressTester:
              f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64 "
              f"--file_service_type=random --ramp_time=5",
              "Small files with synchronous writes, stressing filesystem metadata operations."),
-            
+
             ("Random Writes",
              f"--directory={self.test_dir} --name=rand_write --size={self.test_size} "
              f"--rw=randwrite --bs=4k --sync=1 --runtime={self.runtime_each} "
              f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64",
              "Random write performance with synchronous I/O."),
-             
+
             ("Mixed ReadWrite",
              f"--directory={self.test_dir} --name=mixed_rw --size={self.test_size} "
              f"--rw=randrw --rwmixread=70 --bs=8k --runtime={self.runtime_each} "
              f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=32",
              "Mixed read/write workload with 70% reads, typical of database environments.")
         ]
-        
+
         # Run all defined tests
         for test_name, fio_options, description in test_workloads:
             self.run_test(test_name, fio_options, description)
@@ -724,14 +732,14 @@ class FSStressTester:
 
     def run(self) -> None:
         """Run the full benchmark suite.
-        
+
         This method orchestrates the entire benchmark process by:
         1. Setting up the SQLite database
-        2. Saving test run metadata 
+        2. Saving test run metadata
         3. Analyzing storage device information
         4. Executing all defined benchmark tests
         5. Displaying a summary of results
-        
+
         The benchmark results are stored in the SQLite database for later analysis
         and comparison with future benchmark runs.
         """
@@ -757,80 +765,80 @@ class FSStressTester:
 
 def parse_args():
     """Parse command-line arguments.
-    
+
     Returns:
         argparse.Namespace: The parsed command-line arguments
-        
+
     Command-line arguments:
         test_dir: Directory to store test files
         test_size: Size for test files (example: 4G, 512M)
         db_file: SQLite database file path
         -j/--jobs: Number of concurrent jobs
-        -t/--time: Runtime in seconds for each test
-        -r/--repeat: Number of times to repeat each test
+        -t/--time: Runtime in seconds for each tes
+        -r/--repeat: Number of times to repeat each tes
     """
     parser = argparse.ArgumentParser(
         description="Run filesystem stress tests on Linux systems (requires root privileges)"
     )
-    
+
     parser.add_argument(
         "test_dir", nargs="?", default="./fs_test",
         help="Directory to store test files (default: ./fs_test)"
     )
-    
+
     parser.add_argument(
         "test_size", nargs="?", default=None,
         help="Size for test files (example: 4G, 512M, auto-detected if not specified)"
     )
-    
+
     parser.add_argument(
         "db_file", nargs="?", default=None,
         help="SQLite database file path (default: /tmp/fs_benchmark.db)"
     )
-    
+
     parser.add_argument(
         "-j", "--jobs", type=int, default=4,
         help="Number of concurrent jobs (default: 4)"
     )
-    
+
     parser.add_argument(
         "-t", "--time", type=int, default=20,
         help="Runtime in seconds for each test (default: 20)"
     )
-    
+
     parser.add_argument(
         "-r", "--repeat", type=int, default=2,
         help="Number of times to repeat each test (default: 2)"
     )
-    
+
     return parser.parse_args()
 
 
 def main() -> None:
     """Main entry point for the script.
-    
+
     Checks for root privileges, parses command line arguments,
     initializes the FSStressTester with appropriate parameters,
     and runs the benchmark suite.
-    
+
     Exits with status code 1 if not running as root.
     """
-    # Check if running as root
+    # Check if running as roo
     if os.geteuid() != 0:
         print(red("This script must be run as root. Please use sudo."))
         sys.exit(1)
-    
+
     # Parse arguments
     args = parse_args()
-    
+
     # Create and run the stress tester
     tester = FSStressTester(
         test_dir=args.test_dir,
-        test_size=args.test_size, 
+        test_size=args.test_size,
         db_file=args.db_file,
         jobs=args.jobs,
         runtime=args.time,
-        repeat=args.repeat
+        repeat=args.repea
     )
     tester.run()
 
