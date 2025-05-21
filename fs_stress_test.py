@@ -761,8 +761,8 @@ def parse_args():
         test_size: Size for test files (example: 4G, 512M)
         db_file: SQLite database file path
         -j/--jobs: Number of concurrent jobs
-        -t/--time: Runtime in seconds for each tes
-        -r/--repeat: Number of times to repeat each tes
+        -t/--time: Runtime in seconds for each test
+        -r/--repeat: Number of times to repeat each test
     """
     parser = argparse.ArgumentParser(
         description="Run filesystem stress tests on Linux systems (requires root privileges)"
@@ -825,7 +825,7 @@ def main() -> None:
         db_file=args.db_file,
         jobs=args.jobs,
         runtime=args.time,
-        repeat=args.repea
+        repeat=args.repeat
     )
     tester.run()
 
