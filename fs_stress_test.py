@@ -1,34 +1,74 @@
 #!/usr/bin/env python3
-# fs_stress_test.py - Simplified Filesystem Stress Tester (Linux only)
-# This script runs high-stress filesystem tests for Linux systems
-# It reports drive configuration details and stores results in SQLite
+"""
+Simplified Filesystem Stress Tester (Linux only)
+
+This script runs high-stress filesystem performance tests on Linux systems. It
+measures IOPS, latency, and bandwidth under various workload patterns and
+stores results in a SQLite database for comparison between runs.
+
+Features:
+- Multiple test patterns (metadata-intensive, random writes, mixed read/write)
+- Automatic test sizing based on available disk space
+- Storage device detection and analysis
+- Results comparison with previous runs
+- Root-optimized process priority
+
+Requires root privileges and the 'fio' package.
+Example usage: sudo python3 fs_stress_test.py /path/to/test/dir
+"""
 
 import os
 import sys
-import sqlite3
-import subprocess
-import shutil
-import time
 import re
+import time
+import shutil
+import sqlite3
 import argparse
-import numpy as np
+import subprocess
 from typing import Tuple, Optional
+
+import numpy as np
 
 
 # ANSI color functions for consistent output
-def red(text): return f"\033[0;31m{text}\033[0m"
-def green(text): return f"\033[0;32m{text}\033[0m"
-def yellow(text): return f"\033[0;33m{text}\033[0m"
-def blue(text): return f"\033[0;36m{text}\033[0m"
-def purple(text): return f"\033[0;35m{text}\033[0m"
+def red(text):
+    """Format text in red ANSI color."""
+    return f"\033[0;31m{text}\033[0m"
+
+def green(text):
+    """Format text in green ANSI color."""
+    return f"\033[0;32m{text}\033[0m"
+
+def yellow(text):
+    """Format text in yellow ANSI color."""
+    return f"\033[0;33m{text}\033[0m"
+
+def blue(text):
+    """Format text in blue (cyan) ANSI color."""
+    return f"\033[0;36m{text}\033[0m"
+
+def purple(text):
+    """Format text in purple (magenta) ANSI color."""
+    return f"\033[0;35m{text}\033[0m"
 
 
 class FSStressTester:
     """Simplified filesystem stress tester for Linux systems."""
 
-    def __init__(self, test_dir: str, test_size: str = None, db_file: str = None, 
-                 jobs: int = 4, runtime: int = 20, repeat: int = 2):
-        """Initialize the filesystem stress tester with test parameters."""
+    def __init__(
+        self, test_dir: str, test_size: str = None, db_file: str = None,
+        jobs: int = 4, runtime: int = 20, repeat: int = 2
+    ):
+        """Initialize the filesystem stress tester with test parameters.
+        
+        Args:
+            test_dir: Directory where test files will be created
+            test_size: Size of test files (e.g., "4G", "512M"), auto-detected if None
+            db_file: Path to SQLite database file, defaults to /tmp/fs_benchmark.db if None
+            jobs: Number of concurrent test jobs to run
+            runtime: Duration in seconds for each test run
+            repeat: Number of times to repeat each test for averaging
+        """
         self.test_dir = os.path.abspath(test_dir)
         self.num_jobs = jobs           # Concurrent jobs
         self.runtime_each = runtime    # Runtime (seconds per test run)
@@ -67,8 +107,11 @@ class FSStressTester:
         """Optimize process priority for better benchmark accuracy."""
         try:
             # Set real-time I/O class
-            subprocess.run(['ionice', '-c', '1', '-n', '0', '-p', str(os.getpid())],
-                         stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ['ionice', '-c', '1', '-n', '0', '-p', str(os.getpid())],
+                stderr=subprocess.DEVNULL,
+                check=False
+            )
             
             # Set highest CPU priority
             os.nice(-20)
@@ -85,7 +128,9 @@ class FSStressTester:
         """Automatically size the test file based on available space."""
         try:
             # Check directory for space calculation
-            check_dir = self.test_dir if os.path.exists(self.test_dir) else os.path.dirname(self.test_dir)
+            check_dir = self.test_dir
+            if not os.path.exists(check_dir):
+                check_dir = os.path.dirname(check_dir)
 
             # Get available space in KB
             stats = os.statvfs(check_dir)
@@ -116,23 +161,30 @@ class FSStressTester:
     def _get_cpu_info(self) -> str:
         """Get CPU information."""
         try:
-            with open('/proc/cpuinfo', 'r') as f:
+            with open('/proc/cpuinfo', 'r', encoding='utf-8') as f:
                 for line in f:
                     if 'model name' in line:
                         return line.split(':', 1)[1].strip()
             return "Unknown CPU"
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Could not get CPU info: {e}")
             return "Unknown CPU"
 
     def _get_memory_info(self) -> str:
         """Get system memory information."""
         try:
-            result = subprocess.run(['free', '-h'], capture_output=True, text=True)
+            result = subprocess.run(
+                ['free', '-h'], 
+                capture_output=True, 
+                text=True,
+                check=False
+            )
             for line in result.stdout.split('\n'):
                 if line.startswith('Mem:'):
                     return line.split()[1]
             return "Unknown"
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Could not get memory info: {e}")
             return "Unknown"
 
     def _get_filesystem_type(self) -> str:
@@ -141,10 +193,12 @@ class FSStressTester:
             result = subprocess.run(
                 ['df', '-Th', self.test_dir],
                 capture_output=True,
-                text=True
+                text=True,
+                check=False
             )
             return result.stdout.strip().split('\n')[1].split()[1]
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Could not get filesystem type: {e}")
             return "Unknown"
 
     def _get_mount_options(self) -> str:
@@ -153,15 +207,17 @@ class FSStressTester:
             mount_point = subprocess.run(
                 ['df', '-P', self.test_dir],
                 capture_output=True,
-                text=True
+                text=True,
+                check=False
             ).stdout.strip().split('\n')[1].split()[5]
 
-            with open('/proc/mounts', 'r') as f:
+            with open('/proc/mounts', 'r', encoding='utf-8') as f:
                 for line in f:
                     if mount_point in line:
                         return line.split()[3]
             return "Unknown"
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Could not get mount options: {e}")
             return "Unknown"
 
     def init_database(self) -> None:
@@ -272,8 +328,7 @@ class FSStressTester:
 
             if row:
                 return row[0], row[1], row[2]
-            else:
-                return None, None, None
+            return None, None, None
         except sqlite3.Error as e:
             print(red(f"Warning: Could not get previous results: {e}"))
             return None, None, None
@@ -290,25 +345,33 @@ class FSStressTester:
                 # For latency, negative change is good
                 if change < 0:
                     return green(f"{change:.2f}%")
-                else:
-                    return red(f"+{change:.2f}%")
-            else:
-                # For IOPS and bandwidth, positive change is good
-                if change < 0:
-                    return red(f"{change:.2f}%")
-                else:
-                    return green(f"+{change:.2f}%")
-        except Exception:
+                return red(f"+{change:.2f}%")
+            
+            # For IOPS and bandwidth, positive change is good
+            if change < 0:
+                return red(f"{change:.2f}%")
+            return green(f"+{change:.2f}%")
+        except Exception as e:
+            print(f"Warning: Error calculating percentage change: {e}")
             return "N/A"
 
     def get_storage_info(self) -> None:
-        """Get basic information about the storage device."""
+        """Get basic information about the storage device.
+        
+        Identifies the physical storage device hosting the test directory,
+        determines if it's an SSD or HDD, and checks the active I/O scheduler.
+        Prints this information to the console.
+        """
         print(blue("=== Storage Device Analysis ==="))
 
         try:
             # Get the mount point for the directory
-            result = subprocess.run(['df', '-P', self.test_dir],
-                                 capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ['df', '-P', self.test_dir],
+                capture_output=True, 
+                text=True, 
+                check=True
+            )
             lines = result.stdout.strip().split('\n')
             if len(lines) < 2:
                 raise ValueError("Could not determine mount point")
@@ -324,7 +387,7 @@ class FSStressTester:
                 
             rotational_path = f"/sys/block/{device_name}/queue/rotational"
             if os.path.exists(rotational_path):
-                with open(rotational_path, 'r') as f:
+                with open(rotational_path, 'r', encoding='utf-8') as f:
                     if f.read().strip() == "0":
                         print(f"{yellow('Device type:')} SSD")
                     else:
@@ -333,7 +396,7 @@ class FSStressTester:
             # Check I/O scheduler
             scheduler_path = f"/sys/block/{device_name}/queue/scheduler"
             if os.path.exists(scheduler_path):
-                with open(scheduler_path, 'r') as f:
+                with open(scheduler_path, 'r', encoding='utf-8') as f:
                     scheduler_data = f.read().strip()
                     match = re.search(r'\[(.*?)\]', scheduler_data)
                     if match:
@@ -345,177 +408,145 @@ class FSStressTester:
             print(red(f"Error detecting storage device: {e}"))
 
     def extract_metric(self, output: str, metric: str) -> Optional[float]:
-        """Extract the specified metric from fio output."""
+        """Extract the specified metric from fio output.
+        
+        Parses fio output text to extract performance metrics including IOPS,
+        latency, and bandwidth. Handles different fio output formats and unit conversions.
+        
+        Args:
+            output: Raw text output from the fio command
+            metric: Which metric to extract - one of "iops", "lat", or "bw" (bandwidth)
+            
+        Returns:
+            The extracted metric value as a float, or 0 if not found
+        """
         try:
+            # Extract IOPS from fio output
             if metric == "iops":
-                # Look for IOPS value in fio output
+                # First try standard format
                 matches = re.search(r'iops\s*=\s*([0-9.]+)([kKMG]?)', output)
                 if matches:
-                    val = float(matches.group(1))
-                    unit = matches.group(2).lower() if matches.group(2) else ''
-
-                    if unit == 'k':
-                        val *= 1000
-                    elif unit == 'm':
-                        val *= 1000000
-                    elif unit == 'g':
-                        val *= 1000000000
-
-                    return val
-
+                    return self._convert_units(matches)
+                
                 # Try newer fio format
                 matches = re.search(r'IOPS\s*=\s*([0-9.]+)([kKMG]?)', output)
                 if matches:
-                    val = float(matches.group(1))
-                    unit = matches.group(2).lower() if matches.group(2) else ''
-
-                    if unit == 'k':
-                        val *= 1000
-                    elif unit == 'm':
-                        val *= 1000000
-                    elif unit == 'g':
-                        val *= 1000000000
-
-                    return val
+                    return self._convert_units(matches)
+                    
                 return 0
-
-            elif metric == "lat":
-                # Look for average latency
+            
+            # Extract latency from fio output
+            if metric == "lat":
                 matches = re.search(r'lat.*?avg\s*=\s*([0-9.]+)', output)
                 if matches:
                     return float(matches.group(1))
                 return 0
-
-            elif metric == "bw":
+            
+            # Extract bandwidth from fio output
+            if metric == "bw":
                 # Try newer fio format first (KiB/s)
                 matches = re.search(r'bw\s*=\s*([0-9.]+)([kKMG]?)iB/s', output)
                 if matches:
-                    val = float(matches.group(1))
-                    unit = matches.group(2).lower() if matches.group(2) else ''
-
-                    if unit == 'k':
-                        val *= 1024
-                    elif unit == 'm':
-                        val *= 1048576
-                    elif unit == 'g':
-                        val *= 1073741824
-
-                    return val
-
+                    return self._convert_units(matches, binary=True)
+                
                 # Fallback to older format
                 matches = re.search(r'bw\s*=\s*([0-9.]+)([kKMG]?)B/s', output)
                 if matches:
-                    val = float(matches.group(1))
-                    unit = matches.group(2).lower() if matches.group(2) else ''
-
-                    if unit == 'k':
-                        val *= 1024
-                    elif unit == 'm':
-                        val *= 1048576
-                    elif unit == 'g':
-                        val *= 1073741824
-
-                    return val
-
+                    return self._convert_units(matches, binary=True)
+                    
                 return 0
-            else:
-                return None
+                
+            return None
+            
         except Exception as e:
             print(red(f"Warning: Error extracting {metric}: {e}"))
             return 0
+            
+    def _convert_units(self, matches, binary=False) -> float:
+        """Convert units from K/M/G to base numbers.
+        
+        Args:
+            matches: Regex match object containing value and unit
+            binary: If True, use 1024-based conversion instead of 1000-based
+            
+        Returns:
+            Converted numeric value
+        """
+        val = float(matches.group(1))
+        unit = matches.group(2).lower() if matches.group(2) else ''
+        
+        if not unit:
+            return val
+            
+        if binary:
+            # Binary units (powers of 1024)
+            if unit == 'k':
+                val *= 1024
+            elif unit == 'm':
+                val *= 1048576  # 1024^2
+            elif unit == 'g':
+                val *= 1073741824  # 1024^3
+        else:
+            # Decimal units (powers of 1000)
+            if unit == 'k':
+                val *= 1000
+            elif unit == 'm':
+                val *= 1000000  # 1000^2
+            elif unit == 'g':
+                val *= 1000000000  # 1000^3
+                
+        return val
 
-    def run_test(self, test_name: str, fio_options: str, description: str) -> None:
-        """Run fio test multiple times and calculate geometric mean."""
-        print(green(f"Running test: {test_name}"))
-        print(f"{yellow('Description:')} {description}")
-
-        # Arrays to store results
-        results_iops = []
-        results_lat = []
-        results_bw = []
-
-        # Drop caches before starting
+    def drop_caches(self) -> None:
+        """Drop system caches to ensure consistent benchmarking."""
         try:
-            with open('/proc/sys/vm/drop_caches', 'w') as f:
+            with open('/proc/sys/vm/drop_caches', 'w', encoding='utf-8') as f:
                 f.write('3')
             subprocess.run(['sync'], check=False)
         except Exception as e:
             print(red(f"Error dropping caches: {e}"))
 
-        for run in range(1, self.runs + 1):
-            print(blue(f"Run {run} of {self.runs}"))
-            print(f"{yellow('Command:')} fio {self.ssd_params} {fio_options}")
+    def calculate_geomean(self, values: list) -> float:
+        """Calculate geometric mean of a list of values, filtering out zeros and None."""
+        valid_values = [x for x in values if x is not None and x > 0]
+        if not valid_values:
+            return 0.0
+        return float(np.exp(np.mean(np.log(valid_values))))
 
-            # Clear caches before each run
-            try:
-                with open('/proc/sys/vm/drop_caches', 'w') as f:
-                    f.write('3')
-                subprocess.run(['sync'], check=False)
-            except Exception as e:
-                print(red(f"Error dropping caches: {e}"))
+    def execute_fio_run(self, run_num: int, fio_options: str) -> Tuple[float, float, float]:
+        """Execute a single fio benchmark run and return results."""
+        try:
+            # Build command with proper priority settings
+            cmd = ['ionice', '-c', '1', '-n', '0', 'nice', '-n', '-20',
+                 'fio'] + self.ssd_params.split() + fio_options.split()
+                 
+            # Run fio and capture output
+            process = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            output = process.stdout
 
-            # Run fio with high priority
-            try:
-                cmd = ['ionice', '-c', '1', '-n', '0', 'nice', '-n', '-20',
-                     'fio'] + self.ssd_params.split() + fio_options.split()
+            # Extract and validate metrics
+            iops = self.extract_metric(output, "iops") or 0
+            lat = self.extract_metric(output, "lat") or 0
+            bw = self.extract_metric(output, "bw") or 0
 
-                # Run fio and capture output
-                process = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                output = process.stdout
+            print(purple(
+                f"Run {run_num} Results: IOPS={iops:.2f}, "
+                f"Latency={lat:.2f} ms, Bandwidth={bw:.2f} KB/s"
+            ))
+            
+            return iops, lat, bw
+            
+        except subprocess.SubprocessError as e:
+            print(red(f"Error running fio: {e}"))
+            return 0, 0, 0
 
-                # Extract metrics from the output
-                iops = self.extract_metric(output, "iops")
-                lat = self.extract_metric(output, "lat")
-                bw = self.extract_metric(output, "bw")
-
-                # Handle None values
-                iops = 0 if iops is None else iops
-                lat = 0 if lat is None else lat
-                bw = 0 if bw is None else bw
-
-                print(purple(f"Run {run} Results: IOPS={iops:.2f}, Latency={lat:.2f} ms, Bandwidth={bw:.2f} KB/s"))
-
-                # Store results
-                results_iops.append(iops)
-                results_lat.append(lat)
-                results_bw.append(bw)
-
-                # Short pause between runs
-                time.sleep(2)
-
-            except subprocess.SubprocessError as e:
-                print(red(f"Error running fio: {e}"))
-                # Append zeros to maintain consistent arrays
-                results_iops.append(0)
-                results_lat.append(0)
-                results_bw.append(0)
-
-        # Calculate geometric means (filter out zeros and None values)
-        valid_iops = [x for x in results_iops if x is not None and x > 0]
-        valid_lat = [x for x in results_lat if x is not None and x > 0]
-        valid_bw = [x for x in results_bw if x is not None and x > 0]
-
-        if valid_iops:
-            geomean_iops = float(np.exp(np.mean(np.log(valid_iops))))
-        else:
-            geomean_iops = 0
-
-        if valid_lat:
-            geomean_lat = float(np.exp(np.mean(np.log(valid_lat))))
-        else:
-            geomean_lat = 0
-
-        if valid_bw:
-            geomean_bw = float(np.exp(np.mean(np.log(valid_bw))))
-        else:
-            geomean_bw = 0
-
-        # Save results to database
-        self.save_test_results(test_name, geomean_iops, geomean_lat, geomean_bw)
-
-        # Get previous results for comparison
-        prev_iops, prev_latency, prev_bandwidth = self.get_previous_results(test_name)
-
+    def display_results(self, test_name: str, metrics: Tuple[float, float, float], 
+                        prev_metrics: Tuple[Optional[float], Optional[float], Optional[float]]) -> None:
+        """Display benchmark results with comparison to previous runs if available."""
+        geomean_iops, geomean_lat, geomean_bw = metrics
+        prev_iops, prev_latency, prev_bandwidth = prev_metrics
+        
+        print("")
         if prev_iops is not None:
             # Calculate percentage changes
             iops_change = self.calc_percentage_change(geomean_iops, prev_iops)
@@ -523,28 +554,109 @@ class FSStressTester:
             bw_change = self.calc_percentage_change(geomean_bw, prev_bandwidth)
 
             # Print results with comparisons
-            print("")
             print(green(f"=== Results for {test_name} (with comparison) ==="))
-            print(f"{yellow('IOPS:')}             {geomean_iops:.2f} \t[Previous: {prev_iops:.2f} \tChange: {iops_change}]")
-            print(f"{yellow('Average Latency:')}  {geomean_lat:.2f} ms \t[Previous: {prev_latency:.2f} ms \tChange: {lat_change}]")
-            print(f"{yellow('Bandwidth:')}        {geomean_bw:.2f} KB/s \t[Previous: {prev_bandwidth:.2f} KB/s \tChange: {bw_change}]")
+            print(f"{yellow('IOPS:')} {geomean_iops:.2f} \t[Previous: {prev_iops:.2f} \tChange: {iops_change}]")
+            print(f"{yellow('Latency:')} {geomean_lat:.2f} ms \t[Previous: {prev_latency:.2f} ms \tChange: {lat_change}]")
+            print(f"{yellow('Bandwidth:')} {geomean_bw:.2f} KB/s \t[Previous: {prev_bandwidth:.2f} KB/s \tChange: {bw_change}]")
         else:
             # No previous results
-            print("")
             print(green(f"=== Results for {test_name} ==="))
-            print(f"{yellow('IOPS:')}             {geomean_iops:.2f}")
-            print(f"{yellow('Average Latency:')}  {geomean_lat:.2f} ms")
-            print(f"{yellow('Bandwidth:')}        {geomean_bw:.2f} KB/s")
+            print(f"{yellow('IOPS:')} {geomean_iops:.2f}")
+            print(f"{yellow('Latency:')} {geomean_lat:.2f} ms")
+            print(f"{yellow('Bandwidth:')} {geomean_bw:.2f} KB/s")
             print(blue("(No previous test data available for comparison)"))
+
+    def run_test(self, test_name: str, fio_options: str, description: str) -> None:
+        """Run fio test multiple times and calculate geometric mean.
+        
+        Executes the specified fio benchmark test, repeats it multiple times,
+        calculates geometric means of the results, and compares with previous runs.
+        
+        Args:
+            test_name: Descriptive name for the test (used in reporting)
+            fio_options: Command-line options to pass to fio
+            description: Human-readable description of the test
+        """
+        print(green(f"Running test: {test_name}"))
+        print(f"{yellow('Description:')} {description}")
+
+        # Arrays to store results
+        results_iops, results_lat, results_bw = [], [], []
+
+        # Drop caches before starting
+        self.drop_caches()
+
+        # Execute multiple test runs
+        for run in range(1, self.runs + 1):
+            print(blue(f"Run {run} of {self.runs}"))
+            print(f"{yellow('Command:')} fio {self.ssd_params} {fio_options}")
+
+            # Clear caches before each run
+            self.drop_caches()
+
+            # Run fio benchmark
+            iops, lat, bw = self.execute_fio_run(run, fio_options)
+            
+            # Store results
+            results_iops.append(iops)
+            results_lat.append(lat)
+            results_bw.append(bw)
+
+            # Short pause between runs
+            time.sleep(2)
+
+        # Calculate geometric means
+        geomean_iops = self.calculate_geomean(results_iops)
+        geomean_lat = self.calculate_geomean(results_lat)
+        geomean_bw = self.calculate_geomean(results_bw)
+
+        # Save results to database
+        self.save_test_results(test_name, geomean_iops, geomean_lat, geomean_bw)
+
+        # Get previous results and display
+        prev_metrics = self.get_previous_results(test_name)
+        self.display_results(test_name, (geomean_iops, geomean_lat, geomean_bw), prev_metrics)
 
         print("")
         print(green(f"Completed test: {test_name}"))
         print("--------------------------------------------------------------")
         print("")
 
-    def run_all_tests(self) -> None:
-        """Run core filesystem stress tests."""
-        # Display test parameters
+    def pre_allocate_file(self) -> str:
+        """Pre-allocate test file and return its path.
+        
+        Returns:
+            Path to the pre-allocated file
+        """
+        print(blue("Pre-allocating test file..."))
+        preallocated_file = os.path.join(self.test_dir, "preallocated_file")
+
+        try:
+            # Try fallocate first (more efficient)
+            if shutil.which('fallocate'):
+                subprocess.run(['fallocate', '-l', self.test_size, preallocated_file], check=True)
+                return preallocated_file
+                
+            # Convert size to MB for dd
+            size_mb = 1024  # default 1GB
+            if self.test_size.endswith('G'):
+                size_mb = int(float(self.test_size[:-1]) * 1024)
+            elif self.test_size.endswith('M'):
+                size_mb = int(float(self.test_size[:-1]))
+                
+            # Use dd as fallback
+            subprocess.run([
+                'dd', 'if=/dev/zero', f'of={preallocated_file}',
+                'bs=1M', f'count={size_mb}', 'status=progress'
+            ], check=True)
+                
+        except Exception as e:
+            print(red(f"Warning: Error pre-allocating file: {e}"))
+            
+        return preallocated_file
+
+    def display_test_parameters(self) -> None:
+        """Display test parameters at the beginning of test run."""
         print(blue("=== Test Parameters ==="))
         print(f"{yellow('Test directory:')} {self.test_dir}")
         print(f"{yellow('Test size:')} {self.test_size}")
@@ -554,61 +666,50 @@ class FSStressTester:
         print(f"{yellow('Database file:')} {self.db_file}")
         print("")
 
+    def run_all_tests(self) -> None:
+        """Run core filesystem stress tests.
+        
+        Executes a predefined set of filesystem benchmarks that test different
+        workload patterns and I/O characteristics:
+        1. Metadata-intensive operations (many small files with fsync)
+        2. Random write performance with synchronous I/O
+        3. Mixed read/write workload typical of database environments
+        
+        Pre-allocates test files and cleans up afterward.
+        """
+        # Display test parameters
+        self.display_test_parameters()
+
         # Create an empty file to pre-allocate space
-        print(blue("Pre-allocating test file..."))
-        preallocated_file = os.path.join(self.test_dir, "preallocated_file")
-
-        try:
-            # Try fallocate first
-            if shutil.which('fallocate'):
-                size_arg = self.test_size
-                subprocess.run(['fallocate', '-l', size_arg, preallocated_file], check=True)
-            else:
-                # Fallback to dd
-                size_mb = 0
-                if self.test_size.endswith('G'):
-                    size_mb = int(float(self.test_size[:-1]) * 1024)
-                elif self.test_size.endswith('M'):
-                    size_mb = int(float(self.test_size[:-1]))
-                else:
-                    size_mb = 1024  # default to 1GB
-
-                # Use dd to create the file
-                subprocess.run([
-                    'dd', 'if=/dev/zero', f'of={preallocated_file}',
-                    'bs=1M', f'count={size_mb}', 'status=progress'
-                ], check=True)
-        except Exception as e:
-            print(red(f"Warning: Error pre-allocating file: {e}"))
+        preallocated_file = self.pre_allocate_file()
         print("")
 
-        # 1. METADATA-INTENSIVE WORKLOAD
-        self.run_test(
-            "Metadata-Intensive",
-            f"--directory={self.test_dir} --name=metadata_test --size=32M --nrfiles=1000 "
-            f"--rw=randwrite --bs=4k --sync=1 --fsync=1 --runtime={self.runtime_each} "
-            f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64 "
-            f"--file_service_type=random --ramp_time=5",
-            "Small files with synchronous writes, stressing filesystem metadata operations."
-        )
-
-        # 2. SYNCHRONOUS RANDOM WRITES
-        self.run_test(
-            "Random Writes",
-            f"--directory={self.test_dir} --name=rand_write --size={self.test_size} "
-            f"--rw=randwrite --bs=4k --sync=1 --runtime={self.runtime_each} "
-            f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64",
-            "Random write performance with synchronous I/O."
-        )
-
-        # 3. MIXED READ/WRITE WORKLOAD
-        self.run_test(
-            "Mixed ReadWrite",
-            f"--directory={self.test_dir} --name=mixed_rw --size={self.test_size} "
-            f"--rw=randrw --rwmixread=70 --bs=8k --runtime={self.runtime_each} "
-            f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=32",
-            "Mixed read/write workload with 70% reads, typical of database environments."
-        )
+        # Define test workloads
+        test_workloads = [
+            # Test name, fio options, description
+            ("Metadata-Intensive",
+             f"--directory={self.test_dir} --name=metadata_test --size=32M --nrfiles=1000 "
+             f"--rw=randwrite --bs=4k --sync=1 --fsync=1 --runtime={self.runtime_each} "
+             f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64 "
+             f"--file_service_type=random --ramp_time=5",
+             "Small files with synchronous writes, stressing filesystem metadata operations."),
+            
+            ("Random Writes",
+             f"--directory={self.test_dir} --name=rand_write --size={self.test_size} "
+             f"--rw=randwrite --bs=4k --sync=1 --runtime={self.runtime_each} "
+             f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=64",
+             "Random write performance with synchronous I/O."),
+             
+            ("Mixed ReadWrite",
+             f"--directory={self.test_dir} --name=mixed_rw --size={self.test_size} "
+             f"--rw=randrw --rwmixread=70 --bs=8k --runtime={self.runtime_each} "
+             f"--time_based --numjobs={self.num_jobs} --group_reporting --iodepth=32",
+             "Mixed read/write workload with 70% reads, typical of database environments.")
+        ]
+        
+        # Run all defined tests
+        for test_name, fio_options, description in test_workloads:
+            self.run_test(test_name, fio_options, description)
 
         # Clean up
         print(blue("Cleaning up test files..."))
@@ -622,7 +723,18 @@ class FSStressTester:
         print("Done!")
 
     def run(self) -> None:
-        """Run the full benchmark suite."""
+        """Run the full benchmark suite.
+        
+        This method orchestrates the entire benchmark process by:
+        1. Setting up the SQLite database
+        2. Saving test run metadata 
+        3. Analyzing storage device information
+        4. Executing all defined benchmark tests
+        5. Displaying a summary of results
+        
+        The benchmark results are stored in the SQLite database for later analysis
+        and comparison with future benchmark runs.
+        """
         # Initialize database
         self.init_database()
 
@@ -644,7 +756,19 @@ class FSStressTester:
 
 
 def parse_args():
-    """Parse command-line arguments."""
+    """Parse command-line arguments.
+    
+    Returns:
+        argparse.Namespace: The parsed command-line arguments
+        
+    Command-line arguments:
+        test_dir: Directory to store test files
+        test_size: Size for test files (example: 4G, 512M)
+        db_file: SQLite database file path
+        -j/--jobs: Number of concurrent jobs
+        -t/--time: Runtime in seconds for each test
+        -r/--repeat: Number of times to repeat each test
+    """
     parser = argparse.ArgumentParser(
         description="Run filesystem stress tests on Linux systems (requires root privileges)"
     )
@@ -683,7 +807,14 @@ def parse_args():
 
 
 def main() -> None:
-    """Main entry point for the script."""
+    """Main entry point for the script.
+    
+    Checks for root privileges, parses command line arguments,
+    initializes the FSStressTester with appropriate parameters,
+    and runs the benchmark suite.
+    
+    Exits with status code 1 if not running as root.
+    """
     # Check if running as root
     if os.geteuid() != 0:
         print(red("This script must be run as root. Please use sudo."))
