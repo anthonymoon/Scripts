@@ -53,15 +53,15 @@ def purple(text):
     return f"\033[0;35m{text}\033[0m"
 
 
-class FSStressTester:
-    """Simplified filesystem stress tester for Linux systems."""
-
+class TestConfig:
+    """Configuration object for filesystem stress tests."""
+    
     def __init__(
         self, test_dir: str, test_size: str = None, db_file: str = None,
         jobs: int = 4, runtime: int = 20, repeat: int = 2
     ):
-        """Initialize the filesystem stress tester with test parameters.
-
+        """Initialize test configuration.
+        
         Args:
             test_dir: Directory where test files will be created
             test_size: Size of test files (e.g., "4G", "512M"), auto-detected if None
@@ -71,16 +71,35 @@ class FSStressTester:
             repeat: Number of times to repeat each test for averaging
         """
         self.test_dir = os.path.abspath(test_dir)
-        self.num_jobs = jobs           # Concurrent jobs
-        self.runtime_each = runtime    # Runtime (seconds per test run)
-        self.runs = repeat             # Times to repeat each tes
         self.test_size = test_size
-        self.db_file = db_file
+        self.db_file = db_file or "/tmp/fs_benchmark.db"
+        self.num_jobs = jobs
+        self.runtime_each = runtime
+        self.runs = repeat
+
+
+class FSStressTester:
+    """Simplified filesystem stress tester for Linux systems."""
+
+    def __init__(self, config: TestConfig):
+        """Initialize the filesystem stress tester with test parameters.
+        
+        Args:
+            config: Test configuration object containing all test parameters
+        """
+        self.config = config
         self.run_id = None
         self.physical_devices = []
-
-        # Optimize process priority - requires roo
+        
+        # Create test directory if it doesn't exist
+        os.makedirs(self.config.test_dir, exist_ok=True)
+        
+        # Optimize process priority - requires root
         self._optimize_process_priority()
+        
+        # Set test size if not provided
+        if not self.config.test_size:
+            self._auto_size_test_file()
 
         # Set test size if not provided
         if not self.test_size:
