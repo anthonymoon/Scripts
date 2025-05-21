@@ -489,6 +489,22 @@ class FSStressTester:
         # Get the appropriate multiplier based on unit and binary flag
         multipliers = binary_multipliers if binary else decimal_multipliers
         return val * multipliers.get(unit, 1)
+        
+    def _format_bandwidth(self, bw_kbs: float) -> str:
+        """Format bandwidth in appropriate units (KB/s, MB/s, or GB/s).
+        
+        Args:
+            bw_kbs: Bandwidth in KB/s
+            
+        Returns:
+            Formatted string with appropriate units
+        """
+        if bw_kbs >= 1048576:  # 1 GB/s = 1024*1024 KB/s
+            return f"{bw_kbs/1048576:.2f} GB/s"
+        elif bw_kbs >= 1024:   # 1 MB/s = 1024 KB/s
+            return f"{bw_kbs/1024:.2f} MB/s"
+        else:
+            return f"{bw_kbs:.2f} KB/s"
 
     def drop_caches(self) -> None:
         """Drop system caches to ensure consistent benchmarking."""
@@ -520,9 +536,10 @@ class FSStressTester:
             lat = self.extract_metric(output, "lat") or 0
             bw = self.extract_metric(output, "bw") or 0
 
+            formatted_bw = self._format_bandwidth(bw)
             print(purple(
                 f"Run {run_num} Results: IOPS={iops:.2f}, "
-                f"Latency={lat:.2f} ms, Bandwidth={bw:.2f} KB/s"
+                f"Latency={lat:.2f} ms, Bandwidth={formatted_bw}"
             ))
 
             return iops, lat, bw
@@ -551,14 +568,17 @@ class FSStressTester:
                   f"\tChange: {iops_change}]")
             print(f"{yellow('Latency:')} {geomean_lat:.2f} ms \t[Previous: {prev_latency:.2f} ms "
                   f"\tChange: {lat_change}]")
-            print(f"{yellow('Bandwidth:')} {geomean_bw:.2f} KB/s \t"
-                  f"[Previous: {prev_bandwidth:.2f} KB/s \tChange: {bw_change}]")
+            formatted_bw = self._format_bandwidth(geomean_bw)
+            formatted_prev_bw = self._format_bandwidth(prev_bandwidth)
+            print(f"{yellow('Bandwidth:')} {formatted_bw} \t"
+                  f"[Previous: {formatted_prev_bw} \tChange: {bw_change}]")
         else:
             # No previous results
             print(green(f"=== Results for {test_name} ==="))
             print(f"{yellow('IOPS:')} {geomean_iops:.2f}")
             print(f"{yellow('Latency:')} {geomean_lat:.2f} ms")
-            print(f"{yellow('Bandwidth:')} {geomean_bw:.2f} KB/s")
+            formatted_bw = self._format_bandwidth(geomean_bw)
+            print(f"{yellow('Bandwidth:')} {formatted_bw}")
             print(blue("(No previous test data available for comparison)"))
 
     def run_test(self, test_name: str, fio_options: str, description: str) -> None:
