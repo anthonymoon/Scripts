@@ -24,6 +24,7 @@ import time
 import shutil
 import sqlite3
 import argparse
+import resource
 import subprocess
 from typing import Tuple, Optional
 
@@ -116,8 +117,7 @@ class FSStressTester:
             # Set highest CPU priority
             os.nice(-20)
 
-            # Increase file descriptor limi
-            import resource
+            # Increase file descriptor limit
             resource.setrlimit(resource.RLIMIT_NOFILE, (1048576, 1048576))
 
             print("Running with elevated process priority")
