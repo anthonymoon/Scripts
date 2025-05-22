@@ -1,0 +1,15 @@
+#!/bin/bash
+
+## Adds current time to var for use in echo for a cleaner log and script ##
+DATE=$(date +"%m/%d/%Y %R:%S :")
+
+## Sets dispmgr var as null ##
+DISPMGR="null"
+
+################################## Script ###################################
+
+echo "$DATE Beginning of Startup!"
+
+
+
+echo "$DATE End of Startup!"

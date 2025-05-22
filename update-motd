@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Capture the output of neofetch
+NEOFETCH_OUTPUT=$(sudo -u anthony neofetch)
+
+# Write the output to /etc/issue and /etc/motd
+echo "$NEOFETCH_OUTPUT" | sudo tee /etc/issue /etc/motd > /dev/null
+

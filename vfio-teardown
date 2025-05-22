@@ -1,0 +1,9 @@
+#!/bin/bash
+DATE=$(date +"%m/%d/%Y %R:%S :")
+
+################################## Script ###################################
+
+echo "$DATE Beginning of Teardown!"
+
+
+echo "$DATE End of Teardown!"

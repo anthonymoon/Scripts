@@ -1,0 +1,519 @@
+Journalctl warnings:
+ kernel: ENERGY_PERF_BIAS: Set to 'normal', was 'performance'
+ kernel: ata1.00: supports DRM functions and may not be fully accessible
+ kernel: ata2.00: supports DRM functions and may not be fully accessible
+ kernel: ata4.00: supports DRM functions and may not be fully accessible
+ kernel: ata3.00: supports DRM functions and may not be fully accessible
+ kernel: ata5.00: supports DRM functions and may not be fully accessible
+ kernel: ata6.00: supports DRM functions and may not be fully accessible
+ kernel: ata1.00: NCQ Send/Recv Log not supported
+ kernel: ata1.00: supports DRM functions and may not be fully accessible
+ kernel: ata1.00: NCQ Send/Recv Log not supported
+ kernel: ata3.00: supports DRM functions and may not be fully accessible
+ kernel: ata5.00: supports DRM functions and may not be fully accessible
+ kernel: ata4.00: supports DRM functions and may not be fully accessible
+ kernel: ata6.00: supports DRM functions and may not be fully accessible
+ kernel: ata2.00: supports DRM functions and may not be fully accessible
+ kernel: spl: loading out-of-tree module taints kernel.
+ lvm[440]: PV /dev/sdb3 online, VG VolGroup00 is complete.
+ kernel: nvme_core: unknown parameter 'io_queue_depth' ignored
+ kernel: nvme_core: unknown parameter 'max_host_mem_size_mb' ignored
+ kernel: nvme_core: unknown parameter 'poll_queues' ignored
+ kernel: nvme_core: unknown parameter 'write_queues' ignored
+ kernel: nvme nvme0: missing or invalid SUBNQN field.
+ kernel: FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+ kernel: zfs: module license 'CDDL' taints kernel.
+ kernel: Disabling lock debugging due to kernel taint
+ kernel: zfs: module license taints kernel.
+ kernel: 
+ kernel: NVRM: loading NVIDIA UNIX x86_64 Kernel Module  550.54.14  Thu  2024
+ kernel: nvidia_uvm: module uses symbols nvUvmInterfaceDisableAccessCntr from proprietary module nvidia, inheriting taint.
+ lvm[925]: PV /dev/sdb3 online, VG VolGroup00 is complete.
+ lvm[925]: VG VolGroup00 finished
+ kernel: FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+ (udev-worker)[844]: cfg80211: Process '/usr/bin/set-wireless-regdom' failed with exit code 1.
+ kernel: i2c i2c-3: Systems with more than 4 memory slots not supported yet, not instantiating SPD
+ (udev-worker)[799]: event17: Failed to call EVIOCSKEYCODE with scan code 0x7c, and key code 190: Invalid argument
+ kernel: BUG: kernel NULL pointer dereference, address: 000000000000001c
+ kernel: #PF: supervisor read access in kernel mode
+ kernel: #PF: error_code(0x0000) - not-present page
+ kernel: Oops: 0000 [#1] PREEMPT SMP NOPTI
+ kernel: CPU: 22 PID: 948 Comm: ddcutil Tainted: P           OE      6.7.6-zen1-1-zen #1 2b9774647e9c5d293f85ecb03ca837a8f58f3c8d
+ kernel: Hardware name: ASUS All Series/X99-A, BIOS 4101 07/10/2019
+ kernel: RIP: 0010:nv_audio_dynamic_power+0xc7/0x130 [nvidia]
+ kernel: Code: a8 01 00 00 48 81 c2 a0 01 00 00 c7 44 24 04 00 00 00 00 48 39 d0 75 12 e9 76 ff ff ff 48 8b 40 08 48 39 d0 0f 84 69 ff ff ff <83> 78 1c 03 75 ed 48 8b 78 20 48 83 bf 48 03 00 00 00 0f 84 51 ff
+ kernel: RSP: 0018:ffffb8cc8580f328 EFLAGS: 00010207
+ kernel: RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000002
+ kernel: RDX: ffff9a38380e99a0 RSI: ffffb8cc8580f2a0 RDI: ffff9a38041930f8
+ kernel: RBP: ffff9a3838cb5c10 R08: 0000000000000000 R09: 0000000000000000
+ kernel: R10: ffffffffc462d750 R11: ffffffffc462d790 R12: ffff9a3838cb5c70
+ kernel: R13: ffffffffc20904c0 R14: ffff9a384a490020 R15: ffff9a3838cb5d58
+ kernel: FS:  0000708240a4fb80(0000) GS:ffff9a56bf980000(0000) knlGS:0000000000000000
+ kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+ kernel: CR2: 000000000000001c CR3: 000000010f730003 CR4: 00000000003706f0
+ kernel: DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+ kernel: DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+ kernel: Call Trace:
+ kernel:  <TASK>
+ kernel:  ? __die+0x10f/0x120
+ kernel:  ? page_fault_oops+0x171/0x4e0
+ kernel:  ? os_acquire_spinlock+0x12/0x30 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  ? exc_page_fault+0x7f/0x180
+ kernel:  ? asm_exc_page_fault+0x26/0x30
+ kernel:  ? nv_audio_dynamic_power+0xc7/0x130 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  ? nv_audio_dynamic_power+0x80/0x130 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  _nv048805rm+0x27/0x30 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  _nv045077rm+0x19e/0x1b0 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  _nv047026rm+0x374/0x410 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  _nv014151rm+0x3f1/0x690 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  _nv045229rm+0x69/0xd0 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  _nv012629rm+0x83/0xa0 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  _nv000582rm+0x5e/0x70 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  rm_kernel_rmapi_op+0x127/0x213 [nvidia 08e8736e84aad904d78e464aab7028d701ddda2e]
+ kernel:  nvkms_call_rm+0x4c/0x80 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  _nv002792kms+0x42/0x50 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv000683kms+0xb1/0x190 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv002621kms+0xde/0x400 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv002621kms+0xa6/0x400 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv002886kms+0x2de/0x3b0 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv000526kms+0x5a8/0xf60 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv002852kms+0x3ca8/0x4a40 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv002533kms+0xc09/0x1310 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? nv_drm_atomic_apply_modeset_config.isra.0+0x2c7/0x5a0 [nvidia_drm e9a53321b81de3cd234f7d38a736ff423a51afba]
+ kernel:  ? nv_drm_atomic_commit+0x23b/0x490 [nvidia_drm e9a53321b81de3cd234f7d38a736ff423a51afba]
+ kernel:  ? _nv000676kms+0x70/0x70 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv000676kms+0x17/0x70 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv000669kms+0x6e/0xa0 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? nvKmsIoctl+0xf7/0x270 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? nvkms_ioctl_from_kapi+0x74/0xe0 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? _nv000669kms+0x3a/0x40 [nvidia_modeset 791cbc0d7368a18a2fe0816c9a7bb12520cb73ff]
+ kernel:  ? nv_drm_master_drop+0x44/0x80 [nvidia_drm e9a53321b81de3cd234f7d38a736ff423a51afba]
+ kernel:  ? drm_master_release+0xd1/0x1f0
+ kernel:  ? drm_file_free+0x28e/0x2a0
+ kernel:  ? drm_release+0xd7/0x1d0
+ kernel:  ? __fput+0x9d/0x2c0
+ kernel:  ? __x64_sys_close+0x8c/0x110
+ kernel:  ? do_syscall_64+0x61/0xe0
+ kernel:  ? syscall_exit_to_user_mode+0x2b/0x40
+ kernel:  ? do_syscall_64+0x70/0xe0
+ kernel:  ? syscall_exit_to_user_mode+0x2b/0x40
+ kernel:  ? do_syscall_64+0x70/0xe0
+ kernel:  ? do_syscall_64+0x70/0xe0
+ kernel:  ? do_syscall_64+0x70/0xe0
+ kernel:  ? do_syscall_64+0x70/0xe0
+ kernel:  ? entry_SYSCALL_64_after_hwframe+0x6e/0x76
+ kernel:  </TASK>
+ kernel: Modules linked in: btusb crct10dif_pclmul amdxcp snd_intel_sdw_acpi btrtl polyval_clmulni mac80211(+) polyval_generic drm_exec snd_hda_codec gf128mul gpu_sched btintel ghash_clmulni_intel drm_buddy snd_hda_core btbcm sha1_ssse3 i2c_algo_bit eeepc_wmi snd_hwdep btmtk libarc4 asus_wmi rapl drm_suballoc_helper snd_pcm bridge ssb drm_ttm_helper ledtrig_audio intel_cstate iTCO_wdt bluetooth ttm snd_timer intel_pmc_bxt sparse_keymap stp e1000e(+) platform_profile mmc_core llc iTCO_vendor_support i2c_i801 drm_display_helper snd mei_me i8042 pcmcia ptp intel_uncore serio pcmcia_core intel_wmi_thunderbolt wmi_bmof cec pcspkr mxm_wmi mei ecdh_generic i2c_smbus soundcore lpc_ich pps_core mousedev joydev cfg80211 apple_mfi_fastcharge rfkill mac_hid i2c_dev crypto_user fuse loop nfnetlink ip_tables x_tables vfio_pci vfio_pci_core irqbypass vfio_iommu_type1 vfio iommufd hid_apple uas usb_storage nvidia_uvm(POE) nvidia_drm(POE) ext4 nvidia_modeset(POE) crc16 hid_generic mbcache usbhid nvidia(POE) jbd2 xfs btrfs
+ kernel:  blake2b_generic xor raid6_pq libcrc32c dm_mod zfs(POE) crc32c_generic vfat fat crc32_pclmul crc32c_intel sha512_ssse3 sha256_ssse3 aesni_intel crypto_simd cryptd nvme nvme_core xhci_pci nvme_auth xhci_pci_renesas video bcma spl(OE) wmi
+ kernel: CR2: 000000000000001c
+ kernel: ---[ end trace 0000000000000000 ]---
+ kernel: RIP: 0010:nv_audio_dynamic_power+0xc7/0x130 [nvidia]
+ kernel: Code: a8 01 00 00 48 81 c2 a0 01 00 00 c7 44 24 04 00 00 00 00 48 39 d0 75 12 e9 76 ff ff ff 48 8b 40 08 48 39 d0 0f 84 69 ff ff ff <83> 78 1c 03 75 ed 48 8b 78 20 48 83 bf 48 03 00 00 00 0f 84 51 ff
+ kernel: RSP: 0018:ffffb8cc8580f328 EFLAGS: 00010207
+ kernel: RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000002
+ kernel: RDX: ffff9a38380e99a0 RSI: ffffb8cc8580f2a0 RDI: ffff9a38041930f8
+ kernel: RBP: ffff9a3838cb5c10 R08: 0000000000000000 R09: 0000000000000000
+ kernel: R10: ffffffffc462d750 R11: ffffffffc462d790 R12: ffff9a3838cb5c70
+ kernel: R13: ffffffffc20904c0 R14: ffff9a384a490020 R15: ffff9a3838cb5d58
+ kernel: FS:  0000708240a4fb80(0000) GS:ffff9a56bf980000(0000) knlGS:0000000000000000
+ kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+ kernel: CR2: 000000000000001c CR3: 000000010f730003 CR4: 00000000003706f0
+ kernel: DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+ kernel: DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+ (udev-worker)[916]: hiddev3: Process '/usr/bin/ddcutil chkusbmon /dev/usb/hiddev3 -v' terminated by signal KILL.
+ (udev-worker)[916]: hiddev3: Failed to wait for spawned command '/usr/bin/ddcutil chkusbmon /dev/usb/hiddev3 -v': Input/output error
+ (udev-worker)[916]: hiddev3: /usr/lib/udev/rules.d/60-ddcutil-usb.rules:8 Failed to execute "/usr/bin/ddcutil chkusbmon /dev/usb/hiddev3 -v": Input/output error
+ kernel: bcma-pci-bridge 0000:05:00.0: bus0: HT force timeout
+ kernel: bcma-pci-bridge 0000:05:00.0: bus0: PLL enable timeout
+ kernel: b43-phy0 ERROR: FOUND UNSUPPORTED PHY (Analog 12, Type 11 (AC), Revision 1)
+ kernel: b43: probe of bcma0:1 failed with error -95
+ (udev-worker)[915]: hiddev0: Spawned process '/usr/bin/ddcutil chkusbmon /dev/usb/hiddev0 -v' [938] is taking longer than 59s to complete
+ (udev-worker)[892]: hiddev1: Spawned process '/usr/bin/ddcutil chkusbmon /dev/usb/hiddev1 -v' [945] is taking longer than 59s to complete
+ (udev-worker)[847]: hiddev4: Spawned process '/usr/bin/ddcutil chkusbmon /dev/usb/hiddev4 -v' [951] is taking longer than 59s to complete
+ (udev-worker)[817]: hiddev2: Spawned process '/usr/bin/ddcutil chkusbmon /dev/usb/hiddev2 -v' [941] is taking longer than 59s to complete
+ systemd-udevd[768]: hiddev0: Worker [915] processing SEQNUM=5874 is taking a long time
+ systemd-udevd[768]: hiddev4: Worker [847] processing SEQNUM=5917 is taking a long time
+ systemd-udevd[768]: hiddev1: Worker [892] processing SEQNUM=5878 is taking a long time
+ systemd-udevd[768]: hiddev2: Worker [817] processing SEQNUM=5882 is taking a long time
+ udevadm[795]: Timed out for waiting the udev queue being empty.
+ systemd[1]: systemd-udev-settle.service: Failed with result 'exit-code'.
+ systemd[1]: Failed to start Wait for udev To Complete Device Initialization.
+ systemd[1]: Dependency failed for Import ZFS pools by cache file.
+ bootctl[1062]: ! Mount point '/efi' which backs the random seed file is world accessible, which is a security hole! !
+ bootctl[1062]: ! Random seed file '/efi/loader/random-seed' is world accessible, which is a security hole! !
+ (qbalance)[1124]: irqbalance.service: Referenced but unset environment variable evaluates to an empty string: IRQBALANCE_ARGS
+ (modprobe)[1126]: lm_sensors.service: Referenced but unset environment variable evaluates to an empty string: BUS_MODULES
+ kernel: ACPI Warning: SystemIO range 0x0000000000000295-0x0000000000000296 conflicts with OpRegion 0x0000000000000290-0x0000000000000299 (\_GPE.HWM) (20230628/utaddress-204)
+ bluetoothd[1121]: src/plugin.c:plugin_init() System does not support csip plugin
+ bluetoothd[1121]: profiles/audio/micp.c:micp_init() D-Bus experimental not enabled
+ bluetoothd[1121]: src/plugin.c:plugin_init() System does not support micp plugin
+ bluetoothd[1121]: src/plugin.c:plugin_init() System does not support vcp plugin
+ bluetoothd[1121]: src/plugin.c:plugin_init() System does not support mcp plugin
+ bluetoothd[1121]: src/plugin.c:plugin_init() System does not support bass plugin
+ bluetoothd[1121]: src/plugin.c:plugin_init() System does not support bap plugin
+ bluetoothd[1121]: src/adapter.c:reset_adv_monitors_complete() Failed to reset Adv Monitors: Failed (0x03)
+ bluetoothd[1121]: Failed to clear UUIDs: Failed (0x03)
+ bluetoothd[1121]: Failed to add UUID: Failed (0x03)
+ bluetoothd[1121]: Failed to add UUID: Failed (0x03)
+ bluetoothd[1121]: Failed to add UUID: Failed (0x03)
+ virtstoraged[1187]: cannot open directory '/tank/ISOs': No such file or directory
+ virtstoraged[1187]: internal error: Failed to autostart storage pool 'ISOs': cannot open directory '/tank/ISOs': No such file or directory
+ virtstoraged[1187]: internal error: Child process (zpool get -Hp health,size,free,allocated tank) unexpected exit status 2: missing pool name.
+                                         
+                                         usage:
+                                                 get [-Hp] [-o "all" | field[,...]] <"all" | property[,...]> <pool> ...
+                                         
+                                         the following properties are supported:
+                                         
+                                                 PROPERTY             EDIT   VALUES
+                                         
+                                                 allocated              NO   <size>
+                                                 bcloneratio            NO   <1.00x or higher if cloned>
+                                                 bclonesaved            NO   <size>
+                                                 bcloneused             NO   <size>
+                                                 capacity               NO   <size>
+                                                 checkpoint             NO   <size>
+                                                 dedupratio             NO   <1.00x or higher if deduped>
+                                                 expandsize             NO   <size>
+                                                 fragmentation          NO   <percent>
+                                                 free                   NO   <size>
+                                                 freeing                NO   <size>
+                                                 guid                   NO   <guid>
+                                                 health                 NO   <state>
+                                                 leaked                 NO   <size>
+                                                 load_guid              NO   <load_guid>
+                                                 size                   NO   <size>
+                                                 altroot               YES   <path>
+                                                 ashift                YES   <ashift, 9-16, or 0=default>
+                                                 autoexpand            YES   on | off
+                                                 autoreplace           YES   on | off
+                                                 autotrim              YES   on | off
+                                                 bootfs                YES   <filesystem>
+                                                 cachefile             YES   <file> | none
+                                                 comment               YES   <comment-string>
+                                                 compatibility         YES   <file[,file...]> | off | legacy
+                                                 delegation            YES   on | off
+                                                 failmode              YES   wait | continue | panic
+                                                 listsnapshots         YES   on | off
+                                                 multihost             YES   on | off
+                                                 readonly              YES   on | off
+                                                 version               YES   <version>
+                                                 feature@...           YES   disabled | enabled | active
+                                         
+                                         The feature@ properties must be appended with a feature name.
+                                         See zpool-features(7).
+
+Lstopo:
+Machine (126GB total)
+  Package L#0
+    NUMANode L#0 (P#0 126GB)
+    L3 L#0 (45MB)
+      L2 L#0 (256KB) + L1d L#0 (32KB) + L1i L#0 (32KB) + Core L#0
+        PU L#0 (P#0)
+        PU L#1 (P#18)
+      L2 L#1 (256KB) + L1d L#1 (32KB) + L1i L#1 (32KB) + Core L#1
+        PU L#2 (P#1)
+        PU L#3 (P#19)
+      L2 L#2 (256KB) + L1d L#2 (32KB) + L1i L#2 (32KB) + Core L#2
+        PU L#4 (P#2)
+        PU L#5 (P#20)
+      L2 L#3 (256KB) + L1d L#3 (32KB) + L1i L#3 (32KB) + Core L#3
+        PU L#6 (P#3)
+        PU L#7 (P#21)
+      L2 L#4 (256KB) + L1d L#4 (32KB) + L1i L#4 (32KB) + Core L#4
+        PU L#8 (P#4)
+        PU L#9 (P#22)
+      L2 L#5 (256KB) + L1d L#5 (32KB) + L1i L#5 (32KB) + Core L#5
+        PU L#10 (P#5)
+        PU L#11 (P#23)
+      L2 L#6 (256KB) + L1d L#6 (32KB) + L1i L#6 (32KB) + Core L#6
+        PU L#12 (P#6)
+        PU L#13 (P#24)
+      L2 L#7 (256KB) + L1d L#7 (32KB) + L1i L#7 (32KB) + Core L#7
+        PU L#14 (P#7)
+        PU L#15 (P#25)
+      L2 L#8 (256KB) + L1d L#8 (32KB) + L1i L#8 (32KB) + Core L#8
+        PU L#16 (P#8)
+        PU L#17 (P#26)
+      L2 L#9 (256KB) + L1d L#9 (32KB) + L1i L#9 (32KB) + Core L#9
+        PU L#18 (P#9)
+        PU L#19 (P#27)
+      L2 L#10 (256KB) + L1d L#10 (32KB) + L1i L#10 (32KB) + Core L#10
+        PU L#20 (P#10)
+        PU L#21 (P#28)
+      L2 L#11 (256KB) + L1d L#11 (32KB) + L1i L#11 (32KB) + Core L#11
+        PU L#22 (P#11)
+        PU L#23 (P#29)
+      L2 L#12 (256KB) + L1d L#12 (32KB) + L1i L#12 (32KB) + Core L#12
+        PU L#24 (P#12)
+        PU L#25 (P#30)
+      L2 L#13 (256KB) + L1d L#13 (32KB) + L1i L#13 (32KB) + Core L#13
+        PU L#26 (P#13)
+        PU L#27 (P#31)
+      L2 L#14 (256KB) + L1d L#14 (32KB) + L1i L#14 (32KB) + Core L#14
+        PU L#28 (P#14)
+        PU L#29 (P#32)
+      L2 L#15 (256KB) + L1d L#15 (32KB) + L1i L#15 (32KB) + Core L#15
+        PU L#30 (P#15)
+        PU L#31 (P#33)
+      L2 L#16 (256KB) + L1d L#16 (32KB) + L1i L#16 (32KB) + Core L#16
+        PU L#32 (P#16)
+        PU L#33 (P#34)
+      L2 L#17 (256KB) + L1d L#17 (32KB) + L1i L#17 (32KB) + Core L#17
+        PU L#34 (P#17)
+        PU L#35 (P#35)
+  HostBridge
+    PCIBridge
+      PCI 03:00.0 (VGA)
+    PCIBridge
+      PCI 02:00.0 (VGA)
+    PCIBridge
+      PCI 01:00.0 (NVMExp)
+        Block(Disk) "nvme0n1"
+    PCI 00:19.0 (Ethernet)
+      Net "eno1"
+    PCIBridge
+      PCI 05:00.0 (Network)
+    PCIBridge
+      PCI 07:00.0 (VGA)
+    PCI 00:1f.2 (SATA)
+      Block(Disk) "sdf"
+      Block(Disk) "sdd"
+      Block(Disk) "sdb"
+      Block(Disk) "sde"
+      Block(Disk) "sdc"
+      Block(Disk) "sda"
+  Misc(MemoryModule)
+  Misc(MemoryModule)
+  Misc(MemoryModule)
+  Misc(MemoryModule)
+  Misc(MemoryModule)
+  Misc(MemoryModule)
+  Misc(MemoryModule)
+  Misc(MemoryModule)
+
+Lspci (excluding Intel):
+01:00.0 Non-Volatile memory controller: Phison Electronics Corporation E12 NVMe Controller (rev 01)
+02:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Baffin [Radeon Pro WX 4100]
+02:00.1 Audio device: Advanced Micro Devices, Inc. [AMD/ATI] Baffin HDMI/DP Audio [Radeon RX 550 640SP / RX 560/560X]
+03:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Baffin [Radeon Pro WX 4100]
+03:00.1 Audio device: Advanced Micro Devices, Inc. [AMD/ATI] Baffin HDMI/DP Audio [Radeon RX 550 640SP / RX 560/560X]
+05:00.0 Network controller: Broadcom Inc. and subsidiaries BCM4360 802.11ac Dual Band Wireless Network Adapter (rev 03)
+06:00.0 USB controller: Fresco Logic FL1100 USB 3.0 Host Controller (rev 10)
+07:00.0 VGA compatible controller: NVIDIA Corporation TU117GLM [Quadro T400 Mobile] (rev a1)
+07:00.1 Audio device: NVIDIA Corporation Device 10fa (rev a1)
+
+DRM Device:
+DRIVER=simple-framebuffer
+MODALIAS=platform:simple-framebuffer
+
+/proc/iomem:
+00000000-00000fff : Reserved
+00001000-0003efff : System RAM
+0003f000-0003ffff : Reserved
+00040000-0009ffff : System RAM
+000a0000-000bffff : PCI Bus 0000:00
+000f0000-000fffff : System ROM
+00100000-ac93a017 : System RAM
+ac93a018-ac959c57 : System RAM
+ac959c58-ac95a017 : System RAM
+ac95a018-ac96ac57 : System RAM
+ac96ac58-ac96b017 : System RAM
+ac96b018-ac987e57 : System RAM
+ac987e58-ac988017 : System RAM
+ac988018-ac9a4e57 : System RAM
+ac9a4e58-b6971fff : System RAM
+b6972000-b6b22fff : Reserved
+b6b23000-ba3f4fff : System RAM
+ba3f5000-bb15cfff : Reserved
+bb15d000-bb1f3fff : ACPI Tables
+bb1f4000-bd44ffff : ACPI Non-volatile Storage
+bd450000-bdcfcfff : Reserved
+bdcfd000-bdcfdfff : System RAM
+bdcfe000-bdd83fff : Reserved
+bdd84000-bdffffff : System RAM
+be000000-beffffff : Reserved
+bf000000-bfffffff : RAM buffer
+c0000000-fbffbfff : PCI Bus 0000:00
+  c0000000-d01fffff : PCI Bus 0000:02
+    c0000000-cfffffff : 0000:02:00.0
+    d0000000-d01fffff : 0000:02:00.0
+  e0000000-efffffff : PCI MMCONFIG 0000 [bus 00-ff]
+  fa000000-fb0fffff : PCI Bus 0000:07
+    fa000000-faffffff : 0000:07:00.0
+      fa000000-faffffff : nvidia
+    fb000000-fb07ffff : 0000:07:00.0
+    fb080000-fb083fff : 0000:07:00.1
+  fb200000-fb4fffff : PCI Bus 0000:05
+    fb200000-fb3fffff : 0000:05:00.0
+      fb200000-fb3fffff : bcma-pci-bridge
+    fb400000-fb407fff : 0000:05:00.0
+      fb400000-fb407fff : bcma-pci-bridge
+  fb500000-fb5fffff : PCI Bus 0000:06
+    fb500000-fb50ffff : 0000:06:00.0
+      fb500000-fb50ffff : xhci-hcd
+    fb510000-fb510fff : 0000:06:00.0
+    fb511000-fb511fff : 0000:06:00.0
+  fb600000-fb6fffff : PCI Bus 0000:03
+    fb600000-fb63ffff : 0000:03:00.0
+    fb640000-fb65ffff : 0000:03:00.0
+    fb660000-fb663fff : 0000:03:00.1
+  fb700000-fb7fffff : PCI Bus 0000:02
+    fb700000-fb73ffff : 0000:02:00.0
+    fb740000-fb75ffff : 0000:02:00.0
+    fb760000-fb763fff : 0000:02:00.1
+  fb800000-fb8fffff : PCI Bus 0000:01
+    fb800000-fb803fff : 0000:01:00.0
+      fb800000-fb803fff : nvme
+  fb900000-fb91ffff : 0000:00:19.0
+    fb900000-fb91ffff : e1000e
+  fb920000-fb9203ff : 0000:00:1d.0
+    fb920000-fb9203ff : ehci_hcd
+  fb921000-fb9213ff : 0000:00:1a.0
+    fb921000-fb9213ff : ehci_hcd
+  fb922000-fb922fff : 0000:00:19.0
+    fb922000-fb922fff : e1000e
+  fb924000-fb9247ff : 0000:00:1f.2
+    fb924000-fb9247ff : ahci
+  fb925000-fb925fff : 0000:00:05.4
+fbffc000-fbffcfff : dmar1
+fbffd000-fbffdfff : dmar0
+fec00000-fecfffff : PNP0003:00
+  fec00000-fec003ff : IOAPIC 0
+  fec01000-fec013ff : IOAPIC 1
+fed00000-fed003ff : HPET 0
+  fed00000-fed003ff : PNP0103:00
+fed12000-fed1200f : pnp 00:01
+fed12010-fed1201f : pnp 00:01
+fed1b000-fed1bfff : pnp 00:01
+fed1c000-fed44fff : Reserved
+  fed1c000-fed3ffff : pnp 00:01
+    fed1f410-fed1f414 : iTCO_wdt.1.auto
+      fed1f410-fed1f414 : iTCO_wdt.1.auto iTCO_wdt.1.auto
+  fed40000-fed44fff : MSFT0101:00
+    fed40000-fed44fff : MSFT0101:00 MSFT0101:00
+fed45000-fed8bfff : pnp 00:01
+fee00000-feefffff : pnp 00:01
+ff000000-ffffffff : pnp 00:01
+100000000-203fffffff : System RAM
+  1cd2e00000-1cd41fffff : Kernel code
+  1cd4200000-1cd4e62fff : Kernel rodata
+  1cd5000000-1cd5215dff : Kernel data
+  1cd5a95000-1cd5dfffff : Kernel bss
+380000000000-383fffffffff : PCI Bus 0000:00
+  383fc0000000-383fd1ffffff : PCI Bus 0000:07
+    383fc0000000-383fcfffffff : 0000:07:00.0
+      383fc0000000-383fc02fffff : BOOTFB
+        383fc0000000-383fc02fffff : simpledrm
+    383fd0000000-383fd1ffffff : 0000:07:00.0
+  383fe0000000-383ff01fffff : PCI Bus 0000:03
+    383fe0000000-383fefffffff : 0000:03:00.0
+    383ff0000000-383ff01fffff : 0000:03:00.0
+  383ffff00000-383ffff0ffff : 0000:00:14.0
+    383ffff00000-383ffff0ffff : xhci-hcd
+  383ffff10000-383ffff13fff : 0000:00:1b.0
+    383ffff10000-383ffff13fff : ICH HD audio
+  383ffff15000-383ffff1500f : 0000:00:16.0
+    383ffff15000-383ffff1500f : mei_me
+  383ffff17000-383ffff170ff : 0000:00:1f.3
+
+/proc/ioports:
+0000-0cf7 : PCI Bus 0000:00
+  0000-001f : dma1
+  0020-0021 : pic1
+  0040-0043 : timer0
+  0050-0053 : timer1
+  0060-0060 : keyboard
+  0061-0061 : PNP0800:00
+  0062-0062 : PNP0C09:00
+    0062-0062 : EC data
+  0064-0064 : keyboard
+  0066-0066 : PNP0C09:00
+    0066-0066 : EC cmd
+  0070-0071 : rtc0
+  0080-008f : dma page reg
+  00a0-00a1 : pic2
+  00c0-00df : dma2
+  00f0-00ff : fpu
+    00f0-00f0 : PNP0C04:00
+  0290-029f : pnp 00:02
+  0400-047f : pnp 00:01
+    0400-0403 : ACPI PM1a_EVT_BLK
+    0404-0405 : ACPI PM1a_CNT_BLK
+    0408-040b : ACPI PM_TMR
+    0420-042f : ACPI GPE0_BLK
+    0430-0433 : iTCO_wdt.1.auto
+      0430-0433 : iTCO_wdt
+    0450-0450 : ACPI PM2_CNT_BLK
+    0460-047f : iTCO_wdt.1.auto
+      0460-047f : iTCO_wdt
+  0500-057f : pnp 00:01
+  0580-059f : 0000:00:1f.3
+    0580-059f : pnp 00:01
+      0580-059f : i801_smbus
+  0600-061f : pnp 00:01
+  0800-081f : pnp 00:01
+  0880-0883 : pnp 00:01
+0cf8-0cff : PCI conf1
+1000-ffff : PCI Bus 0000:00
+  c000-cfff : PCI Bus 0000:07
+    c000-c07f : 0000:07:00.0
+  d000-dfff : PCI Bus 0000:03
+    d000-d0ff : 0000:03:00.0
+  e000-efff : PCI Bus 0000:02
+    e000-e0ff : 0000:02:00.0
+  f000-f01f : 0000:00:19.0
+  f020-f03f : 0000:00:1f.2
+    f020-f03f : ahci
+  f0a0-f0a3 : 0000:00:1f.2
+    f0a0-f0a3 : ahci
+  f0b0-f0b7 : 0000:00:1f.2
+    f0b0-f0b7 : ahci
+  f0c0-f0c3 : 0000:00:1f.2
+    f0c0-f0c3 : ahci
+  f0d0-f0d7 : 0000:00:1f.2
+    f0d0-f0d7 : ahci
+
+Systemd-analyze critical-chain:
+
+Boot VGA Devices:
+/sys/bus/pci/devices/0000:02:00.0/boot_vga:
+0
+/sys/bus/pci/devices/0000:03:00.0/boot_vga:
+0
+/sys/bus/pci/devices/0000:07:00.0/boot_vga:
+1
+
+Loginctl list-sessions:
+No sessions.
+
+Sensors:
+coretemp-isa-0000
+Adapter: ISA adapter
+Package id 0:  +35.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 0:        +33.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 1:        +35.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 2:        +33.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 3:        +33.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 4:        +31.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 8:        +32.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 9:        +32.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 10:       +32.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 11:       +31.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 16:       +30.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 17:       +29.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 18:       +30.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 19:       +29.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 20:       +29.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 24:       +30.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 25:       +29.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 26:       +29.0°C  (high = +88.0°C, crit = +98.0°C)
+Core 27:       +30.0°C  (high = +88.0°C, crit = +98.0°C)
+
+nvme-pci-0100
+Adapter: PCI adapter
+Composite:    +30.9°C  (low  = -20.1°C, high = +74.8°C)
+                       (crit = +79.8°C)
+
+
+Nvidia-smi:

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Script to monitor KVM VMEXIT Count
+
+VM_NAME="$1"
+
+if [ $(id -u) -ne 0 ]; then
+    echo "This script must be run as root. Re-executing..."
+    sudo $0 "$@"
+    exit
+fi
+
+VM_PID=$(ps -ef | grep kvm | grep -v grep | grep "$VM_NAME" | awk '{print $2}') # The PID of the KVM process
+
+if [ -z "$VM_NAME" ]; then
+    echo "Usage: $0 <VM>"
+    exit 1
+fi
+
+echo "Monitoring VMEXITs for KVM VM with PID: $VM_PID"
+
+# Using perf to monitor kvm:kvm_exit event
+perf stat -e kvm -p $VM_PID
+
